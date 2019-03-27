@@ -1,1 +1,2 @@
-# Sunburst-diagram
+To run:
+http-server
