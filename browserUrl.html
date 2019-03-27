@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <link href="../css/md-styles.css" rel="stylesheet" type="text/css"/>
+    <link href="../css/prism.css" rel="stylesheet" type="text/css" />
+    <script src="../js/prism.js"  >        </script>
+    <title>ICD Schema</title>
+</head>
+<body>
+<h1 id="icd-schema">ICD Schema</h1>
+<p>ICD-API uses sematic web formats RDF-XML and JSON-LD in poviding information on the entities of the classification.</p>
+<p>This document explains the meanings of the properties used in the ICD-API. Some of these properties share the schema from the *Simple Knowledge Organization System (SKOS) as explained at the World Wide Web Consortium (W3C) document : <a href="http://www.w3.org/2009/08/skos-reference/skos.html">http://www.w3.org/2009/08/skos-reference/skos.html</a>. Others are from the ICD Schema described in this document.</p>
+<h2 id="properties-used-in-icd">Properties Used in ICD</h2>
+<h3 id="parent">Parent</h3>
+<p>A list of entities that are parent of the entity (super classes). In the case of ICD-11 linearizations and ICD-10, we only allow one parent per entity where as in the foundation there may be multiple parents.</p>
+<p>SKOS broaderTransitive is used for the parent property</p>
+<p>Schema URI: <code>http://www.w3.org/2004/02/skos/core#broaderTransitive</code></p>
+<h3 id="child">Child</h3>
+<p>SKOS narrowerTransitive used for the child property</p>
+<p>Schema URI: <code>http://www.w3.org/2004/02/skos/core#narrowerTransitive</code></p>
+<h3 id="title">Title</h3>
+<p>We use SKOS prefLabel for the ICD titles.</p>
+<p>Schema URI: <code>http://www.w3.org/2004/02/skos/core#prefLabel</code></p>
+<h3 id="description-definition">Description (Definition)</h3>
+<p>The description is a short characterisation of the entity that states things that are always true about a disease or condition and necessary to understand the scope of the rubric</p>
+<p>SKOS defition property is used for the ICD description.</p>
+<p>Schema URI: <code>http://www.w3.org/2004/02/skos/core#definition</code></p>
+<h3 id="additional-information-long-definition">Additional Information (Long Definition) <a name="longDefinition"></a></h3>
+<p>This is a text field that is not mandatory, but that may contain any additional information about, or characteristics of, the diseases or conditions included in the entity. This text field provides more context for the entity. For example, the most common epidemiologic
+circumstances, putative or highly suspected aetiologic agents, or other information that may not always be true but may be common, typical, or expected. Additional information was formally called 'long definition'.</p>
+<p>Schema URI: <code>http://id.who.int/icd/schema/longDefinition</code></p>
+<h3 id="fully-specified-name">Fully Specified Name  <a name="fullySpecifiedName"></a></h3>
+<p>This is an unambiguous title that does not assume context. For example, &quot;systemic illness with predominant gastrointestinal diarrheal symptoms attributable to vibrio cholera&quot; as opposed to &quot;cholera&quot; or &quot;other&quot; (where the meaning of other would have been clear from the hierarchical context.)</p>
+<p>Schema URI: <code>http://id.who.int/icd/schema/fullySpecifiedName</code></p>
+<h3 id="synonym">Synonym</h3>
+<p>SKOS altLabel property is used for the ICD synonyms.</p>
+<p>Schema URI: <code>http://www.w3.org/2004/02/skos/core#altLabel</code></p>
+<h3 id="inclusion">Inclusion <a name="inclusion"></a></h3>
+<p>Within the coded categories there are typically other optional diagnostic terms. These are known as 'inclusion terms' and are given, in addition to the title, as examples of the diagnostic statements to be classified to that category.</p>
+<p>They may refer to different conditions or be synonyms. They are not a sub-classification of the category. Inclusion terms are listed primarily as a guide to the content of the category, in addition to the definition. Many of the items listed relate to important or common terms belonging to the category. Others are borderline conditions or sites listed to distinguish the boundary between one subcategory and another. The lists of inclusion terms are by no means exhaustive.</p>
+<p>Schema URI: <code>http://id.who.int/icd/schema/inclusion</code></p>
+<h3 id="exclusion">Exclusion <a name="exclusion"></a></h3>
+<p>Certain categories contain lists of 'Exclusions'. These are terms which are classified elsewhere. An example of this is 6A40 Hyperfunction of pituitary gland which excludes Cushing syndrome (6A50)</p>
+<p>Exclusions serve as a cross reference in ICD and help to delimitate the boundaries of a category.</p>
+<p>Schema URI: <code>http://id.who.int/icd/schema/exclusion</code></p>
+<h3 id="narrower-term">Narrower Term <a name="narrowerTerm"></a></h3>
+<p>Narrower terms are terms included in an entity which are not synonyms but rather have a narrower meaning. Most of the time we have additional child entities for such narrower concepts but in some situations they are contained as terms included in an entity</p>
+<p>Schema URI: <code>http://id.who.int/icd/schema/narrowerTerm</code></p>
+<h3 id="browser-url">Browser Url <a name="browserUrl"></a></h3>
+<p>ICD Browser is a web site that allows users see the ICD in its hiearachichal structure at the same time providing search and post-coordination features.</p>
+<p>Browser Url property provides a direct link to the classification or an entity in the classification in the WHO's online ICD Browser.</p>
+<p>Schema URI: <code>http://id.who.int/icd/schema/browserUrl</code></p>
+<h3 id="code">Code <a name="code"></a></h3>
+<p>The classification code used for the entity. Applicable in ICD-10 and ICD-11 Linearizations</p>
+<p>Schema URI: <code>http://id.who.int/icd/schema/code</code></p>
+<h3 id="source">Source  <a name="source"></a></h3>
+<p>Source points to the URI of the foundation entity when you are at a release end point.</p>
+<p>Schema URI: <code>http://id.who.int/icd/schema/source</code></p>
+<h3 id="foundation-child-elsewhere">Foundation Child Elsewhere <a name="foundationChildElsewhere"></a></h3>
+<p>ICD-11 Foundation allows multiple parenting which means a category could be located in more than place in the foundation component. However, this is not possible for ICD-11 linearizations such as in ICD-11 MMS in which a category must be located at a single location. When looking at a linearization entity, this property would list the foundation children that are not children in the linearization.</p>
+<p>The ICD-11 Browser shows them in gray colour therefore they sometimes referred as grey children.</p>
+<p>Schema URI: <code>http://id.who.int/icd/schema/foundationChildElsewhere</code></p>
+<h3 id="index-term">Index Term <a name="indexTerm"></a></h3>
+<p>ICD-11 Index terms are generated from the terms (titles, inclusions, narrower terms) included in the entity as well as from the foundation entities under the linearization shore line. The IndexTerm property includes all of the index terms of a linearization entity in one place.</p>
+<p>Schema URI: <code>http://id.who.int/icd/schema/indexTerm</code></p>
+<h3 id="class-kind">Class Kind <a name="classKind"></a></h3>
+<p>An ICD-11 linearization category or an ICD-10 could have one of the following class kinds:</p>
+<ol>
+<li><strong>chapter</strong> (top level entities in the classification)</li>
+<li><strong>block</strong> (Higher level entities that do not have ICD codes)</li>
+<li><strong>window</strong> (only in ICD-11) Same as block but does not have children in the linearization. It has only other foundation children located elsewhere in the classification.</li>
+<li><strong>category</strong> (Entities that have ICD codes)</li>
+</ol>
+<p>Schema URI: <code>http://id.who.int/icd/schema/classKind</code></p>
+<h3 id="coding-note">Coding Note <a name="codingNote"></a><a name="note"></a><a name="codingHint"></a></h3>
+<p>Additional information or guidelines provided to the user to be used during the ICD coding process.</p>
+<p>Schema URI: <code>http://id.who.int/icd/schema/codingNote</code></p>
+<h3 id="release-date">Release Date<a name="releaseDate"></a></h3>
+<p>The date that the foundation or the linearization has been released</p>
+<p>Schema URI: <code>http://id.who.int/icd/schema/releaseDate</code></p>
+<h3 id="version">Version <a name="version"></a></h3>
+<p>Used with the release URIs when a minor is not supplied and lists all available versions of the requested entity.</p>
+<p>Schema URI: <code>http://id.who.int/icd/schema/version</code></p>
+<h3 id="last-version">Last Version <a name="latestVersion"></a></h3>
+<p>Again used with the release URIs when a minor is not supplied and shows which of the minor version is the latest version.</p>
+<p>Schema URI: <code>http://id.who.int/icd/schema/latestVersion</code></p>
+<h3 id="more">More</h3>
+<p>ICD-11 Content model has more properties than the ones listed above. They will be made available as the content gets ready.</p>
+<p>Especially, there will be additions that provide information on the post-coordination system.</p>
+
+</body>
+</html>
