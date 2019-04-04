@@ -90,10 +90,15 @@
 
             const slice = svg.selectAll('g.slice')
                 .data(partition(root).descendants());
+               /*.data(partition(root).descendants()
+                .filter(function(d){
+                    return(d.x1 -d.x0 > 0.008);
+                    //return(d.depth < 2);
+                }));//*/
 
             slice.exit().remove();
 
-            const newSlice = slice.enter()
+            const newSlice = slice.enter()            
                 .append('g').attr('class', 'slice')
                 .on('click', d => {
                     d3.event.stopPropagation();
@@ -128,7 +133,7 @@
             // Reset to top-level if no data point specified
 
             const transition = svg.transition()
-                .duration(200)
+                .duration(600)
                 .tween('scale', () => {
                     const xd = d3.interpolate(x.domain(), [d.x0, d.x1]),
                         yd = d3.interpolate(y.domain(), [d.y0, 1]);
@@ -151,7 +156,7 @@
                 svg.selectAll('.slice').filter(d => d === elD)
                     .each(function(d) {
                         this.parentNode.appendChild(this);
-                        if (d.parent) { moveStackToFront(d.parent); }
+                        //if (d.parent) { moveStackToFront(d.parent); }
                     })
 
             }
