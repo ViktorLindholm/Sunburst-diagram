@@ -7,15 +7,6 @@
 <body>
 	<svg></svg>
 	<script>
-		//const d3 = require("d3@5")
-		/*partition = data => {
-			const root = d3.hierarchy(data)
-			.sum(d => d.value)
-			.sort((a, b) => b.value - a.value);
-			return d3.partition()
-			.size([2 * Math.PI, root.height + 1])
-			(root);
-		}*/
 		const partition = d3.partition();
 		const width = 932
 		const radius = width / 6
@@ -121,7 +112,5 @@
 
 			return svg.node();
 		}
-
-		chart();
 	</script>
 </body>
