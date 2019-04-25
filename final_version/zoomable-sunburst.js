@@ -1,18 +1,9 @@
-// URL: https://observablehq.com/@d3/zoomable-sunburst
-// Title: Zoomable Sunburst
-// Author: D3 (@d3)
-// Version: 341
-// Runtime version: 1
-
 const v1 = {
-  //id: "86ddbc29bd33f9d6@341",
   variables: [
   {
     inputs: ["md"],
     value: (function(md){return(
-      md`# Zoomable Sunburst
-
-      This variant of a [sunburst diagram](/@d3/sunburst) shows only two layers of the hierarchy at a time. Click a node to zoom in, or the center to zoom out. Compare to an [icicle](/@d3/zoomable-icicle).`
+      md`# ICD-10`
       )})
   },
   {
@@ -33,7 +24,8 @@ const v1 = {
       .attr("transform", `translate(${width / 2},${width / 2})`);
 
       const path = g.append("g")
-      .selectAll("path")
+      //.selectAll("path")
+      .selectAll("g")
       .data(root.descendants().slice(1))
       .join("path")
       .attr("fill", d => { while (d.depth > 1) d = d.parent; return color(d.data.code); })
@@ -120,9 +112,7 @@ const v1 = {
     name: "data",
     inputs: ["d3"],
     value: (function(d3){return(
-//d3.json("https://raw.githubusercontent.com/d3/d3-hierarchy/v1.1.8/test/data/flare.json")
 d3.json("icd-10-3.json")
-//d3.json("flare.json")
 )})
   },
   {
@@ -132,9 +122,8 @@ d3.json("icd-10-3.json")
       data => {
         const root = d3.hierarchy(data)
         .sum(d => 1)
-     // .sort((a, b) => b.value - a.value);
      return d3.partition()
-     .size([2 * Math.PI, root.height + 1])
+     .size([2 * Math.PI, root.height +2])
      (root);
    }
    )})
