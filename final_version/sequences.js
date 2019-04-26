@@ -9,14 +9,7 @@ var b = {
 };
 
 // Mapping of step names to colors.
-var colors = {
-  "A": "#5687D1",
-  "B": "#7B615C",
-  "C": "#DE783B",
-  "D": "#6AB975",
-  "E": "#A173D1",
-  "F": "#BBBBBB"
-};
+var colors = d3.scaleOrdinal(d3.schemeCategory10);
 
 // Total size of all segments; we set this later, after loading the data.
 var totalSize = 0; 
@@ -39,10 +32,25 @@ var arc = d3.arc()
 
 // Use d3.text and d3.csvParseRows so that we do not need to have a header
 // row, and can receive the csv as an array of arrays.
-d3.text("icd-10-3.json", function(text) {
-  const json = JSON.parse(text);
-  console.log(json);
-  createVisualization(json);
+d3.json("icd-10-3.json", function(json) {
+  // const json = JSON.parse(text);
+  // console.log(json);
+  let tempJSON = {};
+    tempJSON.code = json.code;
+    tempJSON.children = [];
+    console.log(json)
+    //tempJSON.children = item.children;
+    for (let i = 0; i < json.children.length; i += 1) {
+      let t = []
+      for (let j = 0; j < json.children[i].children.length; j += 1) {
+        t.push({ code: json.children[i].children[j].code })
+      }
+
+      tempJSON.children.push({code: json.children[i].code, children: t });
+
+    }
+  console.log(tempJSON)
+  createVisualization(tempJSON);
 });
 
 // Main function to draw and set up the visualization, once we have the data.
@@ -76,7 +84,7 @@ function createVisualization(json) {
       .attr("display", function(d) { return d.depth ? null : "none"; })
       .attr("d", arc)
       .attr("fill-rule", "evenodd")
-      .style("fill", function(d) { return colors[d.data.code]; })
+      .style("fill", function(d) { return colors(d.data.code); })
       .style("opacity", 1)
       .on("mouseover", mouseover);
 
@@ -183,7 +191,7 @@ function updateBreadcrumbs(nodeArray, percentageString) {
 
   entering.append("svg:polygon")
       .attr("points", breadcrumbPoints)
-      .style("fill", function(d) { return colors[d.data.name]; });
+      .style("fill", function(d) { return colors(d.data.name); });
 
   entering.append("svg:text")
       .attr("x", (b.w + b.t) / 2)
