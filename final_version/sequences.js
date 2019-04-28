@@ -8,6 +8,12 @@ var b = {
   w: 75, h: 30, s: 3, t: 10
 };
 
+var x = d3.scaleLinear()
+.range([0, 2 * Math.PI]);
+
+var y = d3.scaleSqrt()
+.range([0, radius]);
+
 // Mapping of step names to colors.
 var colors = d3.scaleOrdinal(d3.schemeCategory10);
 
@@ -15,40 +21,37 @@ var colors = d3.scaleOrdinal(d3.schemeCategory10);
 var totalSize = 0; 
 
 var vis = d3.select("#chart").append("svg:svg")
-    .attr("width", width)
-    .attr("height", height)
-    .append("svg:g")
-    .attr("id", "container")
-    .attr("transform", "translate(" + width / 2 + "," + height / 2 + ")");
+.attr("width", width)
+.attr("height", height)
+.append("svg:g")
+.attr("id", "container")
+.attr("transform", "translate(" + width / 2 + "," + height / 2 + ")");
 
 var partition = d3.partition()
-    .size([2 * Math.PI, radius * radius]);
+.size([2 * Math.PI, radius * radius]);
 
 var arc = d3.arc()
-    .startAngle(function(d) { return d.x0; })
-    .endAngle(function(d) { return d.x1; })
-    .innerRadius(function(d) { return Math.sqrt(d.y0); })
-    .outerRadius(function(d) { return Math.sqrt(d.y1); });
+.startAngle(function(d) { return d.x0; })
+.endAngle(function(d) { return d.x1; })
+.innerRadius(function(d) { return Math.sqrt(d.y0); })
+.outerRadius(function(d) { return Math.sqrt(d.y1); });
 
 // Use d3.text and d3.csvParseRows so that we do not need to have a header
 // row, and can receive the csv as an array of arrays.
 d3.json("icd-10-3.json", function(json) {
-  // const json = JSON.parse(text);
-  // console.log(json);
   let tempJSON = {};
-    tempJSON.code = json.code;
-    tempJSON.children = [];
-    console.log(json)
-    //tempJSON.children = item.children;
-    for (let i = 0; i < json.children.length; i += 1) {
-      let t = []
-      for (let j = 0; j < json.children[i].children.length; j += 1) {
-        t.push({ code: json.children[i].children[j].code })
-      }
-
-      tempJSON.children.push({code: json.children[i].code, children: t });
-
+  tempJSON.code = json.code;
+  tempJSON.children = [];
+  console.log(json)
+  for (let i = 0; i < json.children.length; i += 1) {
+    let t = []
+    for (let j = 0; j < json.children[i].children.length; j += 1) {
+      t.push({ code: json.children[i].children[j].code })
     }
+
+    tempJSON.children.push({code: json.children[i].code, children: t });
+
+  }
   console.log(tempJSON)
   createVisualization(tempJSON);
 });
@@ -64,36 +67,50 @@ function createVisualization(json) {
   // Bounding circle underneath the sunburst, to make it easier to detect
   // when the mouse leaves the parent g.
   vis.append("svg:circle")
-      .attr("r", radius)
-      .style("opacity", 0);
+  .attr("r", radius)
+  .style("opacity", 0);
 
   // Turn the data into a d3 hierarchy and calculate the sums.
   var root = d3.hierarchy(json)
-      .sum(function(d) { return 1; })
-      .sort(function(a, b) { return b.code - a.code; });
+  .sum(function(d) { return 1; })
+  .sort(function(a, b) { return b.code - a.code; });
   
   // For efficiency, filter nodes to keep only those large enough to see.
   var nodes = partition(root).descendants()
-      .filter(function(d) {
+  .filter(function(d) {
           return (d.x1 - d.x0 > 0.005); // 0.005 radians = 0.29 degrees
-      });
+        });
 
   var path = vis.data([json]).selectAll("path")
-      .data(nodes)
-      .enter().append("svg:path")
-      .attr("display", function(d) { return d.depth ? null : "none"; })
-      .attr("d", arc)
-      .attr("fill-rule", "evenodd")
-      .style("fill", function(d) { return colors(d.data.code); })
-      .style("opacity", 1)
-      .on("mouseover", mouseover);
+  .data(nodes)
+  .enter().append("svg:path")
+  .attr("display", function(d) { return d.depth ? null : "none"; })
+  .attr("d", arc)
+  .attr("fill-rule", "evenodd")
+  .style("fill", function(d) { return colors(d.data.code); })
+  .style("opacity", 1)
+  .on("click", click)
+  .on("mouseover", mouseover);
 
   // Add the mouseleave handler to the bounding circle.
   d3.select("#container").on("mouseleave", mouseleave);
 
   // Get total size of the tree = value of root node from partition.
   totalSize = path.datum().value;
- };
+};
+
+function click(d) {
+  vis.transition()
+  .duration(750)
+  .tween("scale", function() {
+    var xd = d3.interpolate(x.domain(), [d.x0, d.x1]),
+    yd = d3.interpolate(y.domain(), [d.y0, 1]),
+    yr = d3.interpolate(y.range(), [d.y0 ? 20 : 0, radius]);
+    return function(t) { x.domain(xd(t)); y.domain(yd(t)).range(yr(t)); };
+  })
+  .selectAll("path")
+  .attrTween("d", function(d) { return function() { return arc(d); }; });
+}
 
 // Fade all but the current sequence, and show it in the breadcrumb trail.
 function mouseover(d) {
@@ -105,10 +122,10 @@ function mouseover(d) {
   }
 
   d3.select("#percentage")
-      .text(percentageString);
+  .text(percentageString);
 
   d3.select("#explanation")
-      .style("visibility", "");
+  .style("visibility", "");
 
   var sequenceArray = d.ancestors().reverse();
   sequenceArray.shift(); // remove root node from the array
@@ -116,14 +133,14 @@ function mouseover(d) {
 
   // Fade all the segments.
   d3.selectAll("path")
-      .style("opacity", 0.3);
+  .style("opacity", 0.3);
 
   // Then highlight only those that are an ancestor of the current segment.
   vis.selectAll("path")
-      .filter(function(node) {
-                return (sequenceArray.indexOf(node) >= 0);
-              })
-      .style("opacity", 1);
+  .filter(function(node) {
+    return (sequenceArray.indexOf(node) >= 0);
+  })
+  .style("opacity", 1);
 }
 
 // Restore everything to full opacity when moving off the visualization.
@@ -131,34 +148,34 @@ function mouseleave(d) {
 
   // Hide the breadcrumb trail
   d3.select("#trail")
-      .style("visibility", "hidden");
+  .style("visibility", "hidden");
 
   // Deactivate all segments during transition.
   d3.selectAll("path").on("mouseover", null);
 
   // Transition each segment to full opacity and then reactivate it.
   d3.selectAll("path")
-      .transition()
-      .duration(1000)
-      .style("opacity", 1)
-      .on("end", function() {
-              d3.select(this).on("mouseover", mouseover);
-            });
+  .transition()
+  .duration(1000)
+  .style("opacity", 1)
+  .on("end", function() {
+    d3.select(this).on("mouseover", mouseover);
+  });
 
   d3.select("#explanation")
-      .style("visibility", "hidden");
+  .style("visibility", "hidden");
 }
 
 function initializeBreadcrumbTrail() {
   // Add the svg area.
   var trail = d3.select("#sequence").append("svg:svg")
-      .attr("width", width)
-      .attr("height", 50)
-      .attr("id", "trail");
+  .attr("width", width)
+  .attr("height", 50)
+  .attr("id", "trail");
   // Add the label at the end, for the percentage.
   trail.append("svg:text")
-    .attr("id", "endlabel")
-    .style("fill", "#000");
+  .attr("id", "endlabel")
+  .style("fill", "#000");
 }
 
 // Generate a string that describes the points of a breadcrumb polygon.
@@ -170,9 +187,9 @@ function breadcrumbPoints(d, i) {
   points.push(b.w + "," + b.h);
   points.push("0," + b.h);
   if (i > 0) { // Leftmost breadcrumb; don't include 6th vertex.
-    points.push(b.t + "," + (b.h / 2));
-  }
-  return points.join(" ");
+  points.push(b.t + "," + (b.h / 2));
+}
+return points.join(" ");
 }
 
 // Update the breadcrumb trail to show the current sequence and percentage.
@@ -180,8 +197,8 @@ function updateBreadcrumbs(nodeArray, percentageString) {
 
   // Data join; key function combines name and depth (= position in sequence).
   var trail = d3.select("#trail")
-      .selectAll("g")
-      .data(nodeArray, function(d) { return d.data.name + d.depth; });
+  .selectAll("g")
+  .data(nodeArray, function(d) { return d.data.name + d.depth; });
 
   // Remove exiting nodes.
   trail.exit().remove();
@@ -190,15 +207,15 @@ function updateBreadcrumbs(nodeArray, percentageString) {
   var entering = trail.enter().append("svg:g");
 
   entering.append("svg:polygon")
-      .attr("points", breadcrumbPoints)
-      .style("fill", function(d) { return colors(d.data.name); });
+  .attr("points", breadcrumbPoints)
+  .style("fill", function(d) { return colors(d.data.name); });
 
   entering.append("svg:text")
-      .attr("x", (b.w + b.t) / 2)
-      .attr("y", b.h / 2)
-      .attr("dy", "0.35em")
-      .attr("text-anchor", "middle")
-      .text(function(d) { return d.data.name; });
+  .attr("x", (b.w + b.t) / 2)
+  .attr("y", b.h / 2)
+  .attr("dy", "0.35em")
+  .attr("text-anchor", "middle")
+  .text(function(d) { return d.data.name; });
 
   // Merge enter and update selections; set position for all nodes.
   entering.merge(trail).attr("transform", function(d, i) {
@@ -207,15 +224,15 @@ function updateBreadcrumbs(nodeArray, percentageString) {
 
   // Now move and update the percentage at the end.
   d3.select("#trail").select("#endlabel")
-      .attr("x", (nodeArray.length + 0.5) * (b.w + b.s))
-      .attr("y", b.h / 2)
-      .attr("dy", "0.35em")
-      .attr("text-anchor", "middle")
-      .text(percentageString);
+  .attr("x", (nodeArray.length + 0.5) * (b.w + b.s))
+  .attr("y", b.h / 2)
+  .attr("dy", "0.35em")
+  .attr("text-anchor", "middle")
+  .text(percentageString);
 
   // Make the breadcrumb trail visible, if it's hidden.
   d3.select("#trail")
-      .style("visibility", "");
+  .style("visibility", "");
 
 }
 
@@ -227,29 +244,29 @@ function drawLegend() {
   };
 
   var legend = d3.select("#legend").append("svg:svg")
-      .attr("width", li.w)
-      .attr("height", d3.keys(colors).length * (li.h + li.s));
+  .attr("width", li.w)
+  .attr("height", d3.keys(colors).length * (li.h + li.s));
 
   var g = legend.selectAll("g")
-      .data(d3.entries(colors))
-      .enter().append("svg:g")
-      .attr("transform", function(d, i) {
-              return "translate(0," + i * (li.h + li.s) + ")";
-           });
+  .data(d3.entries(colors))
+  .enter().append("svg:g")
+  .attr("transform", function(d, i) {
+    return "translate(0," + i * (li.h + li.s) + ")";
+  });
 
   g.append("svg:rect")
-      .attr("rx", li.r)
-      .attr("ry", li.r)
-      .attr("width", li.w)
-      .attr("height", li.h)
-      .style("fill", function(d) { return d.value; });
+  .attr("rx", li.r)
+  .attr("ry", li.r)
+  .attr("width", li.w)
+  .attr("height", li.h)
+  .style("fill", function(d) { return d.value; });
 
   g.append("svg:text")
-      .attr("x", li.w / 2)
-      .attr("y", li.h / 2)
-      .attr("dy", "0.35em")
-      .attr("text-anchor", "middle")
-      .text(function(d) { return d.key; });
+  .attr("x", li.w / 2)
+  .attr("y", li.h / 2)
+  .attr("dy", "0.35em")
+  .attr("text-anchor", "middle")
+  .text(function(d) { return d.key; });
 }
 
 function toggleLegend() {
@@ -281,26 +298,26 @@ function buildHierarchy(csv) {
       var childNode;
       if (j + 1 < parts.length) {
    // Not yet at the end of the sequence; move down the tree.
- 	var foundChild = false;
- 	for (var k = 0; k < children.length; k++) {
- 	  if (children[k]["name"] == nodeName) {
- 	    childNode = children[k];
- 	    foundChild = true;
- 	    break;
- 	  }
- 	}
+   var foundChild = false;
+   for (var k = 0; k < children.length; k++) {
+    if (children[k]["name"] == nodeName) {
+      childNode = children[k];
+      foundChild = true;
+      break;
+    }
+  }
   // If we don't already have a child node for this branch, create it.
- 	if (!foundChild) {
- 	  childNode = {"name": nodeName, "children": []};
- 	  children.push(childNode);
- 	}
- 	currentNode = childNode;
-      } else {
+  if (!foundChild) {
+    childNode = {"name": nodeName, "children": []};
+    children.push(childNode);
+  }
+  currentNode = childNode;
+} else {
  	// Reached the end of the sequence; create a leaf node.
  	childNode = {"name": nodeName, "size": size};
  	children.push(childNode);
-      }
-    }
-  }
-  return root;
+ }
+}
+}
+return root;
 };

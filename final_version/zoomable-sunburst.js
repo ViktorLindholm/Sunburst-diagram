@@ -112,8 +112,24 @@ const v1 = {
     name: "data",
     inputs: ["d3"],
     value: (function(d3){return(
-d3.json("icd-10-3.json")
-)})
+      d3.json("icd-10-3.json", function(json){
+        let tempJSON = {};
+        tempJSON.code = json.code;
+        tempJSON.children = [];
+        console.log(json)
+        for (let i = 0; i < json.children.length; i += 1) {
+          let t = []
+          for (let j = 0; j < json.children[i].children.length; j += 1) {
+            t.push({ code: json.children[i].children[j].code })
+          }
+
+          tempJSON.children.push({code: json.children[i].code, children: t });
+
+        }
+        console.log(tempJSON)
+        return tempJSON;
+      })
+      )})
   },
   {
     name: "partition",
@@ -122,11 +138,11 @@ d3.json("icd-10-3.json")
       data => {
         const root = d3.hierarchy(data)
         .sum(d => 1)
-     return d3.partition()
-     .size([2 * Math.PI, root.height +2])
-     (root);
-   }
-   )})
+        return d3.partition()
+        .size([2 * Math.PI, root.height +2])
+        (root);
+      }
+      )})
   },
   {
     name: "color",
