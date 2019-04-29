@@ -113,7 +113,8 @@
 
 
     function click(d) {
-      d = innerSunburst(d.data.code);
+      //d = innerSunburst(d.data.code);
+      console.log(d.data.code);
       svg.transition()
       .duration(750)
       .tween("scale", function() {
