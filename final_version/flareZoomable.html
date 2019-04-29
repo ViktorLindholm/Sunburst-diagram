@@ -39,7 +39,7 @@
       if (error) throw error;
 
       root = d3.hierarchy(root);
-      root.sum(function(d) { return d.size; });
+      root.sum(function(d) { return 1; });
       svg.selectAll("path")
       .data(partition(root).descendants())
       .enter().append("path")
