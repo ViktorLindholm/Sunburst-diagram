@@ -81,11 +81,13 @@
         //console.log(keyIndex);
         var newChildren = [];
         for(let i =0; i < json.children[keyIndex].children.length;i++){
-          for(let j=0; j < json.children[keyIndex]){
+          console.log(json.children[keyIndex].children.length);
+          //console.log(json.children[keyIndex].children[0].children[i].code);
+          for(let j=0; j < json.children[keyIndex].length;i++){
             newChildren.push({code: json.children[keyIndex].children[0].children[i].code});
           }
         }
-        console.log(newChildren);
+        //console.log(newChildren);
       });
     }
 
