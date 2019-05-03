@@ -96,7 +96,7 @@
 
     function transition(d){
       svg.transition()
-      .duration(7000)
+      .duration(700)
       .tween("scale", function() {
         var xd = d3.interpolate(x.domain(), [d.x0, d.x1]),
         yd = d3.interpolate(y.domain(), [d.y0, 1]),
@@ -115,9 +115,11 @@
         case 6:
         if(d.data.code == "ICD-10"){
           svg.selectAll("*").remove();
+          delete data;
           initialSunburst();
+          transition(d);
           console.log(d.data.code.length);
-          console.log("Only ICD-10");
+          console.log(data);
         }
         break;
         case 7:
