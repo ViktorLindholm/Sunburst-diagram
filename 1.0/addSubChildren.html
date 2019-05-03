@@ -57,9 +57,7 @@
     }
 
     function update() {
-      //console.log(data)
       root = d3.hierarchy(data);
-      console.log(root.data.code);
       root.sum(function(d) { return 2; });
       svg.selectAll("path")
       .data(partition(root).descendants())
@@ -96,20 +94,37 @@
       });
     }
 
+    function transition(d){
+      svg.transition()
+      .duration(7000)
+      .tween("scale", function() {
+        var xd = d3.interpolate(x.domain(), [d.x0, d.x1]),
+        yd = d3.interpolate(y.domain(), [d.y0, 1]),
+        yr = d3.interpolate(y.range(), [d.y0 ? 20 : 0, radius]);
+        return function(t) { x.domain(xd(t)); y.domain(yd(t)).range(yr(t)); };
+      })
+      .selectAll("path")
+      .attrTween("d", function(d) { return function() { return arc(d); }; });
+    }
+
     function click(d) {
-      if(d.data.code.length == 1){
-        addThirdLevel(d, function () {
-          svg.transition()
-          .duration(700)
-          .tween("scale", function() {
-            var xd = d3.interpolate(x.domain(), [d.x0, d.x1]),
-            yd = d3.interpolate(y.domain(), [d.y0, 1]),
-            yr = d3.interpolate(y.range(), [d.y0 ? 20 : 0, radius]);
-            return function(t) { x.domain(xd(t)); y.domain(yd(t)).range(yr(t)); };
-          })
-          .selectAll("path")
-          .attrTween("d", function(d) { return function() { return arc(d); }; });
-        });
+      switch (d.data.code.length) {
+        case 1:
+        addThirdLevel(d, function(){transition(d)});
+        break;
+        case 6:
+        if(d.data.code == "ICD-10"){
+          svg.selectAll("*").remove();
+          initialSunburst();
+          console.log(d.data.code.length);
+          console.log("Only ICD-10");
+        }
+        break;
+        case 7:
+        case 8:
+        console.log(d.data.code);
+        default:
+        break;
       }
     }
 
