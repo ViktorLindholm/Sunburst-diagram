@@ -43,7 +43,7 @@
         let tempJSON = {};
         tempJSON.code = json.code;
         tempJSON.children = [];
-        if(tempJSON)
+        if(tempJSON) {
           for (let i = 0; i < json.children.length; i += 1) {
             let t = []
             for (let j = 0; j < json.children[i].children.length; j += 1) {
@@ -64,7 +64,8 @@
           })
           .append("title")
           .text(function(d) { return d.data.code; });
-        });
+        }
+      });
     }
 
     function findKeyIndex(key,json){
@@ -79,17 +80,20 @@
     function addThirdLevel(key){
       d3.json("icd-10-3.json", function(json){
         keyIndex = findKeyIndex(key,json);
-        var newChildren = [];
         for(let i =0; i < json.children[keyIndex].children.length; i++){
+          let newChildren = [];
           for(let j=0; j < json.children[keyIndex].children[i].children.length;j++){
             newChildren.push({code: json.children[keyIndex].children[i].children[j].code});
+          key.children[i].children = newChildren; 
           }
         }
-        key.children[0] = newChildren;
+        //key.data.children = newChildren;
+        console.log(key)
       });
     }
 
     function click(d) {
+      //console.log(d)
       if(d.data.code.length == 1){
         addThirdLevel(d);
       }
