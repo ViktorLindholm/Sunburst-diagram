@@ -40,7 +40,6 @@
     function initialSunburst(){
       svg.selectAll("*").remove();
       d3.json("icd-10-3.json", function(json) {
-        console.log(json);
         let tempJSON = {};
         tempJSON.code = json.code;
         tempJSON.children = [];
@@ -89,7 +88,6 @@
     function findKey(key){
       svg.selectAll("*").remove();
       if(key == "ICD-10"){
-        console.log(key.length);
         return initialSunburst();
       }
       else{
@@ -98,7 +96,6 @@
           let tempJSON = {};
           tempJSON.code = json.code;
           tempJSON.children = [];
-          console.log(key);
           for(i =0 ; i < json.children.length; i++){
             if(json.children[i].code == key){
               for(let j = 0; j < json.children[i].children.length; j++){
@@ -111,6 +108,7 @@
             }
           }
           root = d3.hierarchy(tempJSON);
+          console.log(root.data.code);
           root.sum(function(d) { return 1; });
           svg.selectAll("path")
           .data(partition(root).descendants())

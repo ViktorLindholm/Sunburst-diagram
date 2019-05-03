@@ -39,7 +39,6 @@
 
     function initialSunburst(){
       d3.json("icd-10-3.json", function(json) {
-        //console.log(json);
         let tempJSON = {};
         tempJSON.code = json.code;
         tempJSON.children = [];
@@ -51,30 +50,32 @@
             }
             tempJSON.children.push({code: json.children[i].code, children: t });
           }
-          data = tempJSON
+          data = tempJSON;
           update();
         }
       });
     }
+
     function update() {
-          root = d3.hierarchy(data);
-          root.sum(function(d) { return 1; });
-          svg.selectAll("path")
-          .data(partition(root).descendants())
-          .enter().append("path")
-          .attr("d", arc)
-          .style("fill", function(d) { return color((d.children ? d : d.parent).data.code); })
-          .on("click", click)
-          .on("mouseover", function(d){
-            d3.select(this).style("cursor", "pointer"); 
-          })
-          .append("title")
-          .text(function(d) { return d.data.code; });
+      //console.log(data)
+      root = d3.hierarchy(data);
+      console.log(root.data.code);
+      root.sum(function(d) { return 2; });
+      svg.selectAll("path")
+      .data(partition(root).descendants())
+      .enter().append("path")
+      .attr("d", arc)
+      .style("fill", function(d) { return color((d.children ? d : d.parent).data.code); })
+      .on("click", click)
+      .on("mouseover", function(d){
+        d3.select(this).style("cursor", "pointer"); 
+      })
+      .append("title")
+      .text(function(d) { return d.data.code; });
     }
 
     function findKeyIndex(key,json){
       for(let i = 0; i < json.children.length; i++){
-        console.log(json.children[i].code)
         if(key.data.code == json.children[i].code){
           return i;
         }
@@ -87,23 +88,19 @@
         for(let i =0; i < json.children[keyIndex].children.length; i++){
           key.children[i].data.children = [];
           for(let j=0; j < json.children[keyIndex].children[i].children.length;j++){
-            console.log(key.children[i].data)
             key.children[i].data.children.push({code: json.children[keyIndex].children[i].children[j].code});
           }
         }
-        //key.data.children = newChildren;
-        console.log(data)
-        update();
+        update()
         callback();
       });
     }
 
     function click(d) {
-      //console.log(d)
       if(d.data.code.length == 1){
         addThirdLevel(d, function () {
           svg.transition()
-          .duration(750)
+          .duration(700)
           .tween("scale", function() {
             var xd = d3.interpolate(x.domain(), [d.x0, d.x1]),
             yd = d3.interpolate(y.domain(), [d.y0, 1]),
@@ -116,5 +113,5 @@
       }
     }
 
-    d3.select(self.frameElement).style("height", height + "px");
+    //d3.select(self.frameElement).style("height", height + "px");
   </script>
