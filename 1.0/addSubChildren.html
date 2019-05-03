@@ -29,7 +29,7 @@
     .innerRadius(function(d) { return Math.max(0, y(d.y0)); })
     .outerRadius(function(d) { return Math.max(0, y(d.y1)); });
 
-
+    var data = {};
     var svg = d3.select("body").append("svg")
     .attr("width", width)
     .attr("height", height)
@@ -51,7 +51,13 @@
             }
             tempJSON.children.push({code: json.children[i].code, children: t });
           }
-          root = d3.hierarchy(tempJSON);
+          data = tempJSON
+          update();
+        }
+      });
+    }
+    function update() {
+          root = d3.hierarchy(data);
           root.sum(function(d) { return 1; });
           svg.selectAll("path")
           .data(partition(root).descendants())
@@ -64,8 +70,6 @@
           })
           .append("title")
           .text(function(d) { return d.data.code; });
-        }
-      });
     }
 
     function findKeyIndex(key,json){
@@ -77,36 +81,39 @@
       }
     }
 
-    function addThirdLevel(key){
+    function addThirdLevel(key, callback){
       d3.json("icd-10-3.json", function(json){
         keyIndex = findKeyIndex(key,json);
         for(let i =0; i < json.children[keyIndex].children.length; i++){
-          let newChildren = [];
+          key.children[i].data.children = [];
           for(let j=0; j < json.children[keyIndex].children[i].children.length;j++){
-            newChildren.push({code: json.children[keyIndex].children[i].children[j].code});
-          key.children[i].children = newChildren; 
+            console.log(key.children[i].data)
+            key.children[i].data.children.push({code: json.children[keyIndex].children[i].children[j].code});
           }
         }
         //key.data.children = newChildren;
-        console.log(key)
+        console.log(data)
+        update();
+        callback();
       });
     }
 
     function click(d) {
       //console.log(d)
       if(d.data.code.length == 1){
-        addThirdLevel(d);
+        addThirdLevel(d, function () {
+          svg.transition()
+          .duration(750)
+          .tween("scale", function() {
+            var xd = d3.interpolate(x.domain(), [d.x0, d.x1]),
+            yd = d3.interpolate(y.domain(), [d.y0, 1]),
+            yr = d3.interpolate(y.range(), [d.y0 ? 20 : 0, radius]);
+            return function(t) { x.domain(xd(t)); y.domain(yd(t)).range(yr(t)); };
+          })
+          .selectAll("path")
+          .attrTween("d", function(d) { return function() { return arc(d); }; });
+        });
       }
-      svg.transition()
-      .duration(750)
-      .tween("scale", function() {
-        var xd = d3.interpolate(x.domain(), [d.x0, d.x1]),
-        yd = d3.interpolate(y.domain(), [d.y0, 1]),
-        yr = d3.interpolate(y.range(), [d.y0 ? 20 : 0, radius]);
-        return function(t) { x.domain(xd(t)); y.domain(yd(t)).range(yr(t)); };
-      })
-      .selectAll("path")
-      .attrTween("d", function(d) { return function() { return arc(d); }; });
     }
 
     d3.select(self.frameElement).style("height", height + "px");
