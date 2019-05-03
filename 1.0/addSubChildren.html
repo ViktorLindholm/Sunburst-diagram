@@ -69,6 +69,7 @@
 
     function findKeyIndex(key,json){
       for(let i = 0; i < json.children.length; i++){
+        console.log(json.children[i].code)
         if(key.data.code == json.children[i].code){
           return i;
         }
@@ -78,15 +79,13 @@
     function addThirdLevel(key){
       d3.json("icd-10-3.json", function(json){
         keyIndex = findKeyIndex(key,json);
-        //console.log(keyIndex);
         var newChildren = [];
         for(let i =0; i < json.children[keyIndex].children.length; i++){
           for(let j=0; j < json.children[keyIndex].children[i].children.length;j++){
             newChildren.push({code: json.children[keyIndex].children[i].children[j].code});
-            //console.log(json.children[keyIndex].children[i].children[j].code);
           }
         }
-        console.log(newChildren);
+        key.children[0] = newChildren;
       });
     }
 
