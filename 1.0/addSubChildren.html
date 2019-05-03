@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<style>
+  path {
+    stroke: #fff;
+  }
+</style>
+<script type = "text/javacript" src="icd-10-3.json"></script>
+<body>
+  <script src="https://d3js.org/d3.v4.min.js"></script>
+  <script>
+    var width = 960,
+    height = 700,
+    radius = (Math.min(width, height) / 2) - 10;
+
+    var x = d3.scaleLinear()
+    .range([0, 2 * Math.PI]);
+
+    var y = d3.scaleSqrt()
+    .range([0, radius]);
+
+    var color = d3.scaleOrdinal(d3.schemeCategory20);
+
+    var partition = d3.partition();
+
+    var arc = d3.arc()
+    .startAngle(function(d) { return Math.max(0, Math.min(2 * Math.PI, x(d.x0))); })
+    .endAngle(function(d) { return Math.max(0, Math.min(2 * Math.PI, x(d.x1))); })
+    .innerRadius(function(d) { return Math.max(0, y(d.y0)); })
+    .outerRadius(function(d) { return Math.max(0, y(d.y1)); });
+
+
+    var svg = d3.select("body").append("svg")
+    .attr("width", width)
+    .attr("height", height)
+    .append("g")
+    .attr("transform", "translate(" + width / 2 + "," + (height / 2) + ")");
+    initialSunburst();
+
+    function initialSunburst(){
+      d3.json("icd-10-3.json", function(json) {
+        //console.log(json);
+        let tempJSON = {};
+        tempJSON.code = json.code;
+        tempJSON.children = [];
+        if(tempJSON)
+          for (let i = 0; i < json.children.length; i += 1) {
+            let t = []
+            for (let j = 0; j < json.children[i].children.length; j += 1) {
+              t.push({ code: json.children[i].children[j].code })
+            }
+            tempJSON.children.push({code: json.children[i].code, children: t });
+          }
+          root = d3.hierarchy(tempJSON);
+          root.sum(function(d) { return 1; });
+          svg.selectAll("path")
+          .data(partition(root).descendants())
+          .enter().append("path")
+          .attr("d", arc)
+          .style("fill", function(d) { return color((d.children ? d : d.parent).data.code); })
+          .on("click", click)
+          .on("mouseover", function(d){
+            d3.select(this).style("cursor", "pointer"); 
+          })
+          .append("title")
+          .text(function(d) { return d.data.code; });
+        });
+    }
+
+    function findKeyIndex(key,json){
+      for(let i = 0; i < json.children.length; i++){
+        if(key.data.code == json.children[i].code){
+          return i;
+        }
+      }
+    }
+
+    function addThirdLevel(key){
+      d3.json("icd-10-3.json", function(json){
+        keyIndex = findKeyIndex(key,json);
+        //console.log(keyIndex);
+        var newChildren = [];
+        for(let i =0; i < json.children[keyIndex].children.length;i++){
+          for(let j=0; j < json.children[keyIndex])
+          newChildren.push({code: json.children[keyIndex].children[0].children[i].code});
+        }
+        console.log(newChildren);
+      });
+    }
+
+    function click(d) {
+      if(d.data.code.length == 1){
+        addThirdLevel(d);
+      }
+      svg.transition()
+      .duration(750)
+      .tween("scale", function() {
+        var xd = d3.interpolate(x.domain(), [d.x0, d.x1]),
+        yd = d3.interpolate(y.domain(), [d.y0, 1]),
+        yr = d3.interpolate(y.range(), [d.y0 ? 20 : 0, radius]);
+        return function(t) { x.domain(xd(t)); y.domain(yd(t)).range(yr(t)); };
+      })
+      .selectAll("path")
+      .attrTween("d", function(d) { return function() { return arc(d); }; });
+    }
+
+    d3.select(self.frameElement).style("height", height + "px");
+  </script>

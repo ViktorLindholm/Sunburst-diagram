@@ -35,35 +35,37 @@
     .attr("height", height)
     .append("g")
     .attr("transform", "translate(" + width / 2 + "," + (height / 2) + ")");
-    //fullSunburst();
-    twoLayerSunburst();
+    initialSunburst();
 
-    function twoLayerSunburst(){
+    function initialSunburst(){
+      svg.selectAll("*").remove();
       d3.json("icd-10-3.json", function(json) {
+        console.log(json);
         let tempJSON = {};
         tempJSON.code = json.code;
         tempJSON.children = [];
-        for (let i = 0; i < json.children.length; i += 1) {
-          let t = []
-          for (let j = 0; j < json.children[i].children.length; j += 1) {
-            t.push({ code: json.children[i].children[j].code })
+        if(tempJSON)
+          for (let i = 0; i < json.children.length; i += 1) {
+            let t = []
+            for (let j = 0; j < json.children[i].children.length; j += 1) {
+              t.push({ code: json.children[i].children[j].code })
+            }
+            tempJSON.children.push({code: json.children[i].code, children: t });
           }
-          tempJSON.children.push({code: json.children[i].code, children: t });
-        }
-        root = d3.hierarchy(tempJSON);
-        root.sum(function(d) { return 1; });
-        svg.selectAll("path")
-        .data(partition(root).descendants())
-        .enter().append("path")
-        .attr("d", arc)
-        .style("fill", function(d) { return color((d.children ? d : d.parent).data.code); })
-        .on("click", click)
-        .on("mouseover", function(d){
-          d3.select(this).style("cursor", "pointer"); 
-        })
-        .append("title")
-        .text(function(d) { return d.data.code; });
-      });
+          root = d3.hierarchy(tempJSON);
+          root.sum(function(d) { return 1; });
+          svg.selectAll("path")
+          .data(partition(root).descendants())
+          .enter().append("path")
+          .attr("d", arc)
+          .style("fill", function(d) { return color((d.children ? d : d.parent).data.code); })
+          .on("click", click)
+          .on("mouseover", function(d){
+            d3.select(this).style("cursor", "pointer"); 
+          })
+          .append("title")
+          .text(function(d) { return d.data.code; });
+        });
     }
 
     function fullSunburst(){
@@ -84,9 +86,82 @@
       });
     }
 
-    function getObjects(json, key){
+    function findKey(key){
+      svg.selectAll("*").remove();
+      if(key == "ICD-10"){
+        console.log(key.length);
+        return initialSunburst();
+      }
+      else{
+        if(key.length == 1){
+        d3.json("icd-10-3.json", function(json){
+          let tempJSON = {};
+          tempJSON.code = json.code;
+          tempJSON.children = [];
+          console.log(key);
+          for(i =0 ; i < json.children.length; i++){
+            if(json.children[i].code == key){
+              for(let j = 0; j < json.children[i].children.length; j++){
+                let t = [];
+                for(let k = 0; k < json.children[i].children[j].children.length; k++){
+                  t.push({ code: json.children[i].children[j].children[k].code })
+                }
+                tempJSON.children.push({code: json.children[i].children[j].code, children: t});
+              }
+            }
+          }
+          root = d3.hierarchy(tempJSON);
+          root.sum(function(d) { return 1; });
+          svg.selectAll("path")
+          .data(partition(root).descendants())
+          .enter().append("path")
+          .attr("d", arc)
+          .style("fill", function(d) { return color((d.children ? d : d.parent).data.code); })
+          .on("click", click)
+          .on("mouseover", function(d){
+            d3.select(this).style("cursor", "pointer"); 
+          })
+          .append("title")
+          .text(function(d) { return d.data.code; });
+        });
+        }
+      }
+    }
+
+    function click(d) {
+      findKey(d.data.code);
+      svg.transition()
+      .duration(750)
+      .tween("scale", function() {
+        var xd = d3.interpolate(x.domain(), [d.x0, d.x1]),
+        yd = d3.interpolate(y.domain(), [d.y0, 1]),
+        yr = d3.interpolate(y.range(), [d.y0 ? 20 : 0, radius]);
+        return function(t) { x.domain(xd(t)); y.domain(yd(t)).range(yr(t)); };
+      })
+      .selectAll("path")
+      .attrTween("d", function(d) { return function() { return arc(d); }; });
+    }
+    
+
+    /*
+    function click(d) {
+      svg.transition()
+      .duration(750)
+      .tween("scale", function() {
+        var xd = d3.interpolate(x.domain(), [d.x0, d.x1]),
+        yd = d3.interpolate(y.domain(), [d.y0, 1]),
+        yr = d3.interpolate(y.range(), [d.y0 ? 20 : 0, radius]);
+        return function(t) { x.domain(xd(t)); y.domain(yd(t)).range(yr(t)); };
+      })
+      .selectAll("path")
+      .attrTween("d", function(d) { return function() { return arc(d); }; });
+    }
+    */
+
+    /*
+        function getObjects(json, key){
       console.log(json);
-      //obj = JSON.parse(json);
+      obj = JSON.parse(json);
       console.log(obj);
       var objects = [];
       for (var i in obj){
@@ -101,44 +176,39 @@
       return objects;
     }
 
-
-
-    function innerSunburst(key){
+    function twoLayerSunburst(key){
       d3.json("icd-10-3.json", function(json){
-        var objects = getObjects(json, key);
+        var objects = getChildren(json, key);
         //console.log(objects);
         return objects;
       });
     }
 
-
-    function click(d) {
-      //d = innerSunburst(d.data.code);
-      console.log(d.data.code);
-      svg.transition()
-      .duration(750)
-      .tween("scale", function() {
-        var xd = d3.interpolate(x.domain(), [d.x0, d.x1]),
-        yd = d3.interpolate(y.domain(), [d.y0, 1]),
-        yr = d3.interpolate(y.range(), [d.y0 ? 20 : 0, radius]);
-        return function(t) { x.domain(xd(t)); y.domain(yd(t)).range(yr(t)); };
-      })
-      .selectAll("path")
-      .attrTween("d", function(d) { return function() { return arc(d); }; });
+    function getChildren(json, key){
+      var x = json.filter(function(s){
+        return s.k = key;
+      });
+      console.log(x);
+      if(x.length && typeof x[0].children !== 'undefined'){
+        return x[0].children;
+      }
+      return false;
     }
 
-    /*
-    function click(d) {
-      svg.transition()
-      .duration(750)
-      .tween("scale", function() {
-        var xd = d3.interpolate(x.domain(), [d.x0, d.x1]),
-        yd = d3.interpolate(y.domain(), [d.y0, 1]),
-        yr = d3.interpolate(y.range(), [d.y0 ? 20 : 0, radius]);
-        return function(t) { x.domain(xd(t)); y.domain(yd(t)).range(yr(t)); };
+    function parentId(id){
+      return function(item){
+        return item.code = id;
+      }
+    }
+
+    function getJSON(){
+      d3.json("icd-10-3.json", function(json){
+        return "[" + json + "]";
       })
-      .selectAll("path")
-      .attrTween("d", function(d) { return function() { return arc(d); }; });
+    }
+
+    function addChildren(key){
+      d3.json("icd-10-3.json");
     }
     */
 
