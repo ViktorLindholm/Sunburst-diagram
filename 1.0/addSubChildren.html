@@ -30,6 +30,7 @@
     .outerRadius(function(d) { return Math.max(0, y(d.y1)); });
 
     var data = {};
+    var prev = "";
     var svg = d3.select("body").append("svg")
     .attr("width", width)
     .attr("height", height)
@@ -94,6 +95,15 @@
       });
     }
 
+    function removeThirdLevel(json, key, callback){
+      //console.log(json.children[0].children[0].children[0].data.code);
+      //console.log(json.children[0].children[0].children[0].length);
+      console.log(json.children[0].children[0].children.length);
+      for(i=0; i < json.children[0].children[0].children.length; i++){
+        
+      }
+    }
+
     function transition(d){
       svg.transition()
       .duration(700)
@@ -110,16 +120,14 @@
     function click(d) {
       switch (d.data.code.length) {
         case 1:
+        prev = d.data.code;
         addThirdLevel(d, function(){transition(d)});
         break;
         case 6:
         if(d.data.code == "ICD-10"){
-          svg.selectAll("*").remove();
-          delete data;
+          removeThirdLevel(d,prev);
           initialSunburst();
           transition(d);
-          console.log(d.data.code.length);
-          console.log(data);
         }
         break;
         case 7:
