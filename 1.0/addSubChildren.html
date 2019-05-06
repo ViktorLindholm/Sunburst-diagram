@@ -52,6 +52,8 @@
             tempJSON.children.push({code: json.children[i].code, children: t });
           }
           data = tempJSON;
+          //data.children.shift(); //working remove first element
+          //data.children[1].children.splice(0,80); //remove all from B
           update();
         }
       });
@@ -96,12 +98,14 @@
     }
 
     function removeThirdLevel(json, key, callback){
-      //console.log(json.children[0].children[0].children[0].data.code);
-      //console.log(json.children[0].children[0].children[0].length);
-      console.log(json.children[0].children[0].children.length);
-      for(i=0; i < json.children[0].children[0].children.length; i++){
-        
+      console.log(data.children[0].children.length);
+      for(var i=0; i < json.children[0].children.length; i++){
+        length = data.children[0].children[i].children.length;
+        console.log(length);
+        data.children[0].children[i].children.splice(0,length-1);
       }
+      update();
+      callback();
     }
 
     function transition(d){
@@ -120,12 +124,12 @@
     function click(d) {
       switch (d.data.code.length) {
         case 1:
-        prev = d.data.code;
+        prev = d;
         addThirdLevel(d, function(){transition(d)});
         break;
         case 6:
         if(d.data.code == "ICD-10"){
-          removeThirdLevel(d,prev);
+          removeThirdLevel(d,prev, function(){transition(d)});
           initialSunburst();
           transition(d);
         }
