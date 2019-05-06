@@ -61,18 +61,20 @@
 
     function update() {
       root = d3.hierarchy(data);
-      root.sum(function(d) { return 1; });
+      root.sum(function(d) { console.log(d); return typeof d.children != "undefined" ? 0 : 1; });
       var hej = svg.selectAll("path")
       .data(partition(root).descendants());
       hej.enter().append("path")
-      .attr("d", arc)
       .style("fill", function(d) { return color((d.children ? d : d.parent).data.code); })
       .on("click", click)
       .on("mouseover", function(d){
         d3.select(this).style("cursor", "pointer"); 
       })
-      .append("title")
-      .text(function(d) { return d.data.code; });
+      // .append("title")
+      // .text(function(d) { return d.data.code; })
+      .merge(hej)
+        .attr("d", arc);
+;
       hej.exit().remove();
       console.log(data);
     }
@@ -95,7 +97,7 @@
           }
         }
         update()
-        callback();
+        callback(key);
       });
     }
 
@@ -104,10 +106,10 @@
       for(var i=0; i < data.children[0].children.length; i++){
         length = data.children[0].children[i].children.length;
         console.log(length)
-        data.children[0].children[i].children.splice(0);
+        data.children[0].children[i].children = undefined;
       }
       update();
-      callback();
+      callback(key);
     }
 
     function transition(d){
@@ -117,6 +119,7 @@
         var xd = d3.interpolate(x.domain(), [d.x0, d.x1]),
         yd = d3.interpolate(y.domain(), [d.y0, 1]),
         yr = d3.interpolate(y.range(), [d.y0 ? 20 : 0, radius]);
+        console.log(x.domain(), [d.x0, d.x1]);
         return function(t) { x.domain(xd(t)); y.domain(yd(t)).range(yr(t)); };
       })
       .selectAll("path")
@@ -127,12 +130,12 @@
       switch (d.data.code.length) {
         case 1:
         prev = d;
-        addThirdLevel(d, function(){transition(d)});
+        addThirdLevel(d, function(c) {transition(c)});
         break;
         case 6:
         if(d.data.code == "ICD-10"){
           console.log("removing third level");
-          removeThirdLevel(prev, function(){transition(d)});
+          removeThirdLevel(prev, function(c){transition(c)});
           //initialSunburst();
           transition(d);
         }
