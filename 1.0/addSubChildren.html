@@ -61,10 +61,10 @@
 
     function update() {
       root = d3.hierarchy(data);
-      root.sum(function(d) { return 2; });
+      root.sum(function(d) { return 1; });
       var hej = svg.selectAll("path")
-      .data(partition(root).descendants())
-      .enter().append("path")
+      .data(partition(root).descendants());
+      hej.enter().append("path")
       .attr("d", arc)
       .style("fill", function(d) { return color((d.children ? d : d.parent).data.code); })
       .on("click", click)
@@ -74,6 +74,7 @@
       .append("title")
       .text(function(d) { return d.data.code; });
       hej.exit().remove();
+      console.log(data);
     }
 
     function findKeyIndex(key,json){
@@ -98,12 +99,12 @@
       });
     }
 
-    function removeThirdLevel(json, key, callback){
-      console.log(json.children[0].children.length);
-      for(var i=0; i < json.children[0].children.length; i++){
+    function removeThirdLevel(key, callback){
+      //console.log(data.children[0].children.length);
+      for(var i=0; i < data.children[0].children.length; i++){
         length = data.children[0].children[i].children.length;
-        data.children[0].children[i].children.splice(0,length-1);
-        json.children[0].children[i].children.splice(0,length-1);
+        console.log(length)
+        data.children[0].children[i].children.splice(0);
       }
       update();
       callback();
@@ -130,14 +131,15 @@
         break;
         case 6:
         if(d.data.code == "ICD-10"){
-          removeThirdLevel(d,prev, function(){transition(d)});
+          console.log("removing third level");
+          removeThirdLevel(prev, function(){transition(d)});
           //initialSunburst();
           transition(d);
         }
         break;
         case 7:
         case 8:
-        console.log(d.data.code);
+        //console.log(d.data.code);
         default:
         break;
       }
