@@ -7,39 +7,40 @@
 </style>
 <script type = "text/javacript" src="icd-10-3.json"></script>
 <body>
-  <script src="https://d3js.org/d3.v4.min.js"></script>
+  <script src="https://d3js.org/d3.v5.min.js"></script>
   <script>
     var width = 960,
     height = 700,
     radius = (Math.min(width, height) / 2) - 10;
-
     var x = d3.scaleLinear()
     .range([0, 2 * Math.PI]);
 
     var y = d3.scaleSqrt()
     .range([0, radius]);
 
-    var color = d3.scaleOrdinal(d3.schemeCategory20);
+    var color = d3.scaleOrdinal(d3.schemeCategory10);
 
-    var partition = d3.partition();
-
+    //var partition = d3.partition();
+    var partition = d3.partition()
+    //  .size([2 * Math.PI, radius]);
     var arc = d3.arc()
     .startAngle(function(d) { return Math.max(0, Math.min(2 * Math.PI, x(d.x0))); })
     .endAngle(function(d) { return Math.max(0, Math.min(2 * Math.PI, x(d.x1))); })
     .innerRadius(function(d) { return Math.max(0, y(d.y0)); })
     .outerRadius(function(d) { return Math.max(0, y(d.y1)); });
 
-    var data = {};
+    //var data = {};
     var prev = "";
     var svg = d3.select("body").append("svg")
     .attr("width", width)
     .attr("height", height)
     .append("g")
     .attr("transform", "translate(" + width / 2 + "," + (height / 2) + ")");
+
     initialSunburst();
 
     function initialSunburst(){
-      d3.json("icd-10-3.json", function(json) {
+      d3.json("icd-10-3.json").then(function(json) {
         let tempJSON = {};
         tempJSON.code = json.code;
         tempJSON.children = [];
@@ -51,32 +52,36 @@
             }
             tempJSON.children.push({code: json.children[i].code, children: t });
           }
-          data = tempJSON;
+          //data = tempJSON;
           //data.children.shift(); //working remove first element
           //data.children[1].children.splice(0,80); //remove all from B
-          update();
+          update(tempJSON);
         }
       });
     }
 
-    function update() {
+    function update(data) {
       root = d3.hierarchy(data);
-      root.sum(function(d) { console.log(d); return typeof d.children != "undefined" ? 0 : 1; });
+      root.sum(function(d) {
+        if (typeof d.children != "undefined")
+          return 0 
+        else return 1; });
+      partition(root);
       var hej = svg.selectAll("path")
-      .data(partition(root).descendants());
-      hej.enter().append("path")
-      .style("fill", function(d) { return color((d.children ? d : d.parent).data.code); })
-      .on("click", click)
-      .on("mouseover", function(d){
-        d3.select(this).style("cursor", "pointer"); 
-      })
-      // .append("title")
-      // .text(function(d) { return d.data.code; })
-      .merge(hej)
-        .attr("d", arc);
-;
-      hej.exit().remove();
-      console.log(data);
+      .data(root.descendants());
+      hej.join(
+        enter => enter.append("path")
+                      .style("fill", function(d) { return color((d.children ? d : d.parent).data.code); })
+                      .on("click", click)
+                      .on("mouseover", function(d){
+                        d3.select(this).style("cursor", "pointer"); 
+                      })
+                      .call( enter => enter.append("title")
+                              .text(function(d) { return d.data.code; })
+                      )
+      )
+      .attr("d", arc);
+      //console.log(data);
     }
 
     function findKeyIndex(key,json){
@@ -88,28 +93,51 @@
     }
 
     function addThirdLevel(key, callback){
-      d3.json("icd-10-3.json", function(json){
-        keyIndex = findKeyIndex(key,json);
-        for(let i =0; i < json.children[keyIndex].children.length; i++){
-          key.children[i].data.children = [];
-          for(let j=0; j < json.children[keyIndex].children[i].children.length;j++){
-            key.children[i].data.children.push({code: json.children[keyIndex].children[i].children[j].code});
+      console.log("before", [key.x0, key.x1]);
+
+      d3.json("icd-10-3.json").then(function(json){
+        let tempJSON = {};
+        tempJSON.code = json.code;
+        tempJSON.children = [];
+        if(tempJSON) {
+          for (let i = 0; i < json.children.length; i += 1) {
+            let t = []
+            for (let j = 0; j < json.children[i].children.length; j += 1) {
+              t.push({ code: json.children[i].children[j].code })
+            }
+            tempJSON.children.push({code: json.children[i].code, children: t });
           }
+          keyIndex = findKeyIndex(key,json);
+          for(let i =0; i < json.children[keyIndex].children.length; i++){
+            tempJSON.children[keyIndex].children[i].children = [];
+            for(let j=0; j < json.children[keyIndex].children[i].children.length;j++){
+              tempJSON.children[keyIndex].children[i].children.push({code: json.children[keyIndex].children[i].children[j].code});
+            }
+          }
+          update(tempJSON)
         }
-        update()
-        callback(key);
+        console.log("after", [tempJSON.x0, tempJSON.x1]);
+        callback(root.children[keyIndex]);
       });
     }
 
     function removeThirdLevel(key, callback){
-      //console.log(data.children[0].children.length);
-      for(var i=0; i < data.children[0].children.length; i++){
-        length = data.children[0].children[i].children.length;
-        console.log(length)
-        data.children[0].children[i].children = undefined;
-      }
-      update();
-      callback(key);
+        d3.json("icd-10-3.json").then(function(json){
+        let tempJSON = {};
+        tempJSON.code = json.code;
+        tempJSON.children = [];
+        if(tempJSON) {
+          for (let i = 0; i < json.children.length; i += 1) {
+            let t = []
+            for (let j = 0; j < json.children[i].children.length; j += 1) {
+              t.push({ code: json.children[i].children[j].code })
+            }
+            tempJSON.children.push({code: json.children[i].code, children: t });
+          }
+            update(tempJSON)
+          }
+        });
+      callback(root);
     }
 
     function transition(d){
@@ -119,7 +147,6 @@
         var xd = d3.interpolate(x.domain(), [d.x0, d.x1]),
         yd = d3.interpolate(y.domain(), [d.y0, 1]),
         yr = d3.interpolate(y.range(), [d.y0 ? 20 : 0, radius]);
-        console.log(x.domain(), [d.x0, d.x1]);
         return function(t) { x.domain(xd(t)); y.domain(yd(t)).range(yr(t)); };
       })
       .selectAll("path")
@@ -137,7 +164,7 @@
           console.log("removing third level");
           removeThirdLevel(prev, function(c){transition(c)});
           //initialSunburst();
-          transition(d);
+          //transition(d);
         }
         break;
         case 7:
