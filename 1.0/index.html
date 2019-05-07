@@ -52,8 +52,6 @@
             tempJSON.children.push({code: json.children[i].code, children: t });
           }
           data = tempJSON;
-          //data.children.shift(); //working remove first element
-          //data.children[1].children.splice(0,80); //remove all from B
           update();
         }
       });
@@ -61,22 +59,19 @@
 
     function update() {
       root = d3.hierarchy(data);
-      root.sum(function(d) { console.log(d); return typeof d.children != "undefined" ? 0 : 1; });
-      var hej = svg.selectAll("path")
+      root.sum(function(d) {return typeof d.children != "undefined" ? 0 : 1; });
+      var newSVG = svg.selectAll("path")
       .data(partition(root).descendants());
-      hej.enter().append("path")
+      newSVG.enter().append("path")
       .style("fill", function(d) { return color((d.children ? d : d.parent).data.code); })
       .on("click", click)
       .on("mouseover", function(d){
         d3.select(this).style("cursor", "pointer"); 
       })
-      // .append("title")
-      // .text(function(d) { return d.data.code; })
-      .merge(hej)
+      .merge(newSVG)
         .attr("d", arc);
 ;
-      hej.exit().remove();
-      console.log(data);
+      newSVG.exit().remove();
     }
 
     function findKeyIndex(key,json){
@@ -102,10 +97,8 @@
     }
 
     function removeThirdLevel(key, callback){
-      //console.log(data.children[0].children.length);
       for(var i=0; i < data.children[0].children.length; i++){
         length = data.children[0].children[i].children.length;
-        console.log(length)
         data.children[0].children[i].children = undefined;
       }
       update();
@@ -119,7 +112,6 @@
         var xd = d3.interpolate(x.domain(), [d.x0, d.x1]),
         yd = d3.interpolate(y.domain(), [d.y0, 1]),
         yr = d3.interpolate(y.range(), [d.y0 ? 20 : 0, radius]);
-        console.log(x.domain(), [d.x0, d.x1]);
         return function(t) { x.domain(xd(t)); y.domain(yd(t)).range(yr(t)); };
       })
       .selectAll("path")
@@ -134,19 +126,14 @@
         break;
         case 6:
         if(d.data.code == "ICD-10"){
-          console.log("removing third level");
           removeThirdLevel(prev, function(c){transition(c)});
-          //initialSunburst();
           transition(d);
         }
         break;
         case 7:
         case 8:
-        //console.log(d.data.code);
         default:
         break;
       }
     }
-
-    //d3.select(self.frameElement).style("height", height + "px");
   </script>
