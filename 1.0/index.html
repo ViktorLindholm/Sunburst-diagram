@@ -66,11 +66,10 @@
       .style("fill", function(d) { return color((d.children ? d : d.parent).data.code); })
       .on("click", click)
       .on("mouseover", function(d){
-        d3.select(this).style("cursor", "pointer"); 
+        d3.select(this).style("cursor", "pointer");
       })
       .merge(newSVG)
-        .attr("d", arc);
-;
+      .attr("d", arc);
       newSVG.exit().remove();
     }
 
@@ -78,6 +77,11 @@
       for(let i = 0; i < json.children.length; i++){
         if(key.data.code == json.children[i].code){
           return i;
+        }
+        for(let j=0; j <json.children[i].children.length; j++){
+          if(key.data.code == json.children[i].children[j].code){
+            return [i,j];
+          }
         }
       }
     }
@@ -96,10 +100,23 @@
       });
     }
 
+    function addFourthLevel(key, callback){
+      d3.json("icd-10-3.json", function(json){
+        keyIndex = findKeyIndex(key, json);
+        console.log(keyIndex[0]);
+        console.log(keyIndex[1]);
+        for(let i=0; i < json.children[keyIndex[0].children[keyIndex[1].children.length; i++){
+          console.log(json.children[keyIndex[0].children[keyIndex[1].children[i]);
+        }
+      })
+    }
+
     function removeThirdLevel(key, callback){
-      for(var i=0; i < data.children[0].children.length; i++){
-        length = data.children[0].children[i].children.length;
-        data.children[0].children[i].children = undefined;
+      var keyIndex = findKeyIndex(key, data);
+      console.log(keyIndex);
+      for(var i=0; i < data.children[keyIndex].children.length; i++){
+        length = data.children[keyIndex].children[i].children.length;
+        data.children[keyIndex].children[i].children = undefined;
       }
       update();
       callback(key);
@@ -132,6 +149,8 @@
         break;
         case 7:
         case 8:
+        prev = d;
+        addFourthLevel(d, function(c){transition(c)});
         default:
         break;
       }
