@@ -69,14 +69,10 @@
           d3.select(this).style("cursor", "pointer"); 
         })
         .call( enter => enter.append("title")
-          .text(function(d) { return d.data.code; })
+          .text(function(d) { return d.data.code;})
           )
         )
-      .attr("d", arc);
-
-      newSVG.append('text')
-      .text(function(d){return d.data.code});
-      
+      .attr("d", arc);      
     }
 
     function findKeyIndex(key,json){
@@ -139,7 +135,6 @@
             tempJSON.children.push({code: json.children[i].code, children: t });
           }
           keyIndex = findKeyIndex(key,json);
-          //console.log(keyIndex.length);
           
           for(let i =0; i < json.children[keyIndex[0]].children.length; i++){
             tempJSON.children[keyIndex[0]].children[i].children = [];
@@ -193,7 +188,7 @@
         if(d.data.code == "ICD-10"){
           initialSunburst();
           transition(d);
-        }
+        } else{transition(d)};
         break;
         case 7:
         case 8:
