@@ -7,39 +7,35 @@
 </style>
 <script type = "text/javacript" src="icd-10-3.json"></script>
 <body>
-  <script src="https://d3js.org/d3.v4.min.js"></script>
+  <script src="https://d3js.org/d3.v5.min.js"></script>
   <script>
     var width = 960,
     height = 700,
     radius = (Math.min(width, height) / 2) - 10;
-
     var x = d3.scaleLinear()
     .range([0, 2 * Math.PI]);
 
     var y = d3.scaleSqrt()
     .range([0, radius]);
 
-    var color = d3.scaleOrdinal(d3.schemeCategory20);
-
-    var partition = d3.partition();
-
+    var color = d3.scaleOrdinal(d3.schemeCategory10);
+    var partition = d3.partition()
     var arc = d3.arc()
     .startAngle(function(d) { return Math.max(0, Math.min(2 * Math.PI, x(d.x0))); })
     .endAngle(function(d) { return Math.max(0, Math.min(2 * Math.PI, x(d.x1))); })
     .innerRadius(function(d) { return Math.max(0, y(d.y0)); })
     .outerRadius(function(d) { return Math.max(0, y(d.y1)); });
-
-    var data = {};
     var prev = "";
     var svg = d3.select("body").append("svg")
     .attr("width", width)
     .attr("height", height)
     .append("g")
     .attr("transform", "translate(" + width / 2 + "," + (height / 2) + ")");
+
     initialSunburst();
 
     function initialSunburst(){
-      d3.json("icd-10-3.json", function(json) {
+      d3.json("icd-10-3.json").then(function(json) {
         let tempJSON = {};
         tempJSON.code = json.code;
         tempJSON.children = [];
@@ -51,26 +47,36 @@
             }
             tempJSON.children.push({code: json.children[i].code, children: t });
           }
-          data = tempJSON;
-          update();
+          update(tempJSON);
         }
       });
     }
 
-    function update() {
+    function update(data) {
       root = d3.hierarchy(data);
-      root.sum(function(d) {return typeof d.children != "undefined" ? 0 : 1; });
+      root.sum(function(d) {
+        if (typeof d.children != "undefined")
+          return 0 
+        else return 1; });
+      partition(root);
       var newSVG = svg.selectAll("path")
-      .data(partition(root).descendants());
-      newSVG.enter().append("path")
-      .style("fill", function(d) { return color((d.children ? d : d.parent).data.code); })
-      .on("click", click)
-      .on("mouseover", function(d){
-        d3.select(this).style("cursor", "pointer");
-      })
-      .merge(newSVG)
+      .data(root.descendants());
+      newSVG.join(
+        enter => enter.append("path")
+        .style("fill", function(d) { return color((d.children ? d : d.parent).data.code); })
+        .on("click", click)
+        .on("mouseover", function(d){
+          d3.select(this).style("cursor", "pointer"); 
+        })
+        .call( enter => enter.append("title")
+          .text(function(d) { return d.data.code; })
+          )
+        )
       .attr("d", arc);
-      newSVG.exit().remove();
+
+      newSVG.append('text')
+      .text(function(d){return d.data.code});
+      
     }
 
     function findKeyIndex(key,json){
@@ -78,48 +84,79 @@
         if(key.data.code == json.children[i].code){
           return i;
         }
-        for(let j=0; j <json.children[i].children.length; j++){
+        for(let j=0; j < json.children[i].children.length; j++){
           if(key.data.code == json.children[i].children[j].code){
             return [i,j];
           }
+          for(let k=0; k < json.children[i].children[j].children.length;k++){
+            if(key.data.code == json.children[i].children[j].children[k].code){
+              return [i,j,k];
+            }
+          }
         }
       }
+      return 5;
     }
 
     function addThirdLevel(key, callback){
-      d3.json("icd-10-3.json", function(json){
-        keyIndex = findKeyIndex(key,json);
-        for(let i =0; i < json.children[keyIndex].children.length; i++){
-          key.children[i].data.children = [];
-          for(let j=0; j < json.children[keyIndex].children[i].children.length;j++){
-            key.children[i].data.children.push({code: json.children[keyIndex].children[i].children[j].code});
+      d3.json("icd-10-3.json").then(function(json){
+        let tempJSON = {};
+        tempJSON.code = json.code;
+        tempJSON.children = [];
+        if(tempJSON) {
+          for (let i = 0; i < json.children.length; i += 1) {
+            let t = []
+            for (let j = 0; j < json.children[i].children.length; j += 1) {
+              t.push({ code: json.children[i].children[j].code })
+            }
+            tempJSON.children.push({code: json.children[i].code, children: t });
           }
+          keyIndex = findKeyIndex(key,json);
+          for(let i =0; i < json.children[keyIndex].children.length; i++){
+            tempJSON.children[keyIndex].children[i].children = [];
+            for(let j=0; j < json.children[keyIndex].children[i].children.length;j++){
+              tempJSON.children[keyIndex].children[i].children.push({code: json.children[keyIndex].children[i].children[j].code});
+            }
+          }
+          update(tempJSON)
         }
-        update()
-        callback(key);
+        callback(root.children[keyIndex]);
       });
     }
 
     function addFourthLevel(key, callback){
-      d3.json("icd-10-3.json", function(json){
-        keyIndex = findKeyIndex(key, json);
-        console.log(keyIndex[0]);
-        console.log(keyIndex[1]);
-        for(let i=0; i < json.children[keyIndex[0].children[keyIndex[1].children.length; i++){
-          console.log(json.children[keyIndex[0].children[keyIndex[1].children[i]);
+      d3.json("icd-10-3.json").then(function(json){
+        keyIndex = findKeyIndex(key,json);
+        let tempJSON = {};
+        tempJSON.code = json.code;
+        tempJSON.children = [];
+        if(tempJSON){
+          for (let i = 0; i < json.children.length; i += 1) {
+            let t = []
+            for (let j = 0; j < json.children[i].children.length; j += 1) {
+              t.push({ code: json.children[i].children[j].code })
+            }
+            tempJSON.children.push({code: json.children[i].code, children: t });
+          }
+          keyIndex = findKeyIndex(key,json);
+          //console.log(keyIndex.length);
+          
+          for(let i =0; i < json.children[keyIndex[0]].children.length; i++){
+            tempJSON.children[keyIndex[0]].children[i].children = [];
+            for(let j=0; j < json.children[keyIndex[0]].children[i].children.length;j++){
+              tempJSON.children[keyIndex[0]].children[i].children.push({code: json.children[keyIndex[0]].children[i].children[j].code});
+            }
+          }
+          for(let i=0; i < json.children[keyIndex[0]].children[keyIndex[1]].children.length; i++){
+            tempJSON.children[keyIndex[0]].children[keyIndex[1]].children[i].children = [];
+            for(let j = 0; j < json.children[keyIndex[0]].children[keyIndex[1]].children[i].children.length; j++){
+              tempJSON.children[keyIndex[0]].children[keyIndex[1]].children[i].children.push({code: json.children[keyIndex[0]].children[keyIndex[1]].children[i].children[j].code});
+            }
+          }
+          update(tempJSON);
         }
-      })
-    }
-
-    function removeThirdLevel(key, callback){
-      var keyIndex = findKeyIndex(key, data);
-      console.log(keyIndex);
-      for(var i=0; i < data.children[keyIndex].children.length; i++){
-        length = data.children[keyIndex].children[i].children.length;
-        data.children[keyIndex].children[i].children = undefined;
-      }
-      update();
-      callback(key);
+        callback(root.children[keyIndex[0]].children[keyIndex[1]]);
+      });
     }
 
     function transition(d){
@@ -141,9 +178,20 @@
         prev = d;
         addThirdLevel(d, function(c) {transition(c)});
         break;
+        case 3:
+        if(prev.data.code.length == 1){
+          addFourthLevel(d, function(c){transition(c)});
+          transition(d);
+        }else{
+          transition(d);  
+        }
+        prev = d;
+        break;
+        case 5:
+        transition(d);
         case 6:
         if(d.data.code == "ICD-10"){
-          removeThirdLevel(prev, function(c){transition(c)});
+          initialSunburst();
           transition(d);
         }
         break;

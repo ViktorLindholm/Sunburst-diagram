@@ -19,17 +19,12 @@
     .range([0, radius]);
 
     var color = d3.scaleOrdinal(d3.schemeCategory10);
-
-    //var partition = d3.partition();
     var partition = d3.partition()
-    //  .size([2 * Math.PI, radius]);
     var arc = d3.arc()
     .startAngle(function(d) { return Math.max(0, Math.min(2 * Math.PI, x(d.x0))); })
     .endAngle(function(d) { return Math.max(0, Math.min(2 * Math.PI, x(d.x1))); })
     .innerRadius(function(d) { return Math.max(0, y(d.y0)); })
     .outerRadius(function(d) { return Math.max(0, y(d.y1)); });
-
-    //var data = {};
     var prev = "";
     var svg = d3.select("body").append("svg")
     .attr("width", width)
@@ -52,9 +47,6 @@
             }
             tempJSON.children.push({code: json.children[i].code, children: t });
           }
-          //data = tempJSON;
-          //data.children.shift(); //working remove first element
-          //data.children[1].children.splice(0,80); //remove all from B
           update(tempJSON);
         }
       });
@@ -67,21 +59,20 @@
           return 0 
         else return 1; });
       partition(root);
-      var hej = svg.selectAll("path")
+      var newSVGs = svg.selectAll("path")
       .data(root.descendants());
-      hej.join(
+      newSVG.join(
         enter => enter.append("path")
-                      .style("fill", function(d) { return color((d.children ? d : d.parent).data.code); })
-                      .on("click", click)
-                      .on("mouseover", function(d){
-                        d3.select(this).style("cursor", "pointer"); 
-                      })
-                      .call( enter => enter.append("title")
-                              .text(function(d) { return d.data.code; })
-                      )
-      )
+        .style("fill", function(d) { return color((d.children ? d : d.parent).data.code); })
+        .on("click", click)
+        .on("mouseover", function(d){
+          d3.select(this).style("cursor", "pointer"); 
+        })
+        .call( enter => enter.append("title")
+          .text(function(d) { return d.data.code; })
+          )
+        )
       .attr("d", arc);
-      //console.log(data);
     }
 
     function findKeyIndex(key,json){
@@ -93,8 +84,6 @@
     }
 
     function addThirdLevel(key, callback){
-      console.log("before", [key.x0, key.x1]);
-
       d3.json("icd-10-3.json").then(function(json){
         let tempJSON = {};
         tempJSON.code = json.code;
@@ -116,13 +105,12 @@
           }
           update(tempJSON)
         }
-        console.log("after", [tempJSON.x0, tempJSON.x1]);
         callback(root.children[keyIndex]);
       });
     }
 
     function removeThirdLevel(key, callback){
-        d3.json("icd-10-3.json").then(function(json){
+      d3.json("icd-10-3.json").then(function(json){
         let tempJSON = {};
         tempJSON.code = json.code;
         tempJSON.children = [];
@@ -134,9 +122,9 @@
             }
             tempJSON.children.push({code: json.children[i].code, children: t });
           }
-            update(tempJSON)
-          }
-        });
+          update(tempJSON)
+        }
+      });
       callback(root);
     }
 
@@ -161,19 +149,14 @@
         break;
         case 6:
         if(d.data.code == "ICD-10"){
-          console.log("removing third level");
           removeThirdLevel(prev, function(c){transition(c)});
-          //initialSunburst();
-          //transition(d);
         }
         break;
         case 7:
         case 8:
-        //console.log(d.data.code);
+        console.log(d.data.code);
         default:
         break;
       }
     }
-
-    //d3.select(self.frameElement).style("height", height + "px");
   </script>
