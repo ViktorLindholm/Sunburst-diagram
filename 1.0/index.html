@@ -168,6 +168,7 @@
     }
 
     function click(d) {
+      console.log(d.data.code.length);
       switch (d.data.code.length) {
         case 1:
         prev = d;
@@ -192,6 +193,7 @@
         break;
         case 7:
         case 8:
+        case 9:
         prev = d;
         addFourthLevel(d, function(c){transition(c)});
         default:
