@@ -134,7 +134,6 @@
             }
             tempJSON.children.push({code: json.children[i].code, children: t });
           }
-          keyIndex = findKeyIndex(key,json);
           
           for(let i =0; i < json.children[keyIndex[0]].children.length; i++){
             tempJSON.children[keyIndex[0]].children[i].children = [];
@@ -143,14 +142,17 @@
             }
           }
           for(let i=0; i < json.children[keyIndex[0]].children[keyIndex[1]].children.length; i++){
-            tempJSON.children[keyIndex[0]].children[keyIndex[1]].children[i].children = [];
+
             for(let j = 0; j < json.children[keyIndex[0]].children[keyIndex[1]].children[i].children.length; j++){
-              tempJSON.children[keyIndex[0]].children[keyIndex[1]].children[i].children.push({code: json.children[keyIndex[0]].children[keyIndex[1]].children[i].children[j].code});
-            }
+              if(json.children[keyIndex[0]].children[keyIndex[1]].children[i].children.length != 0){
+                tempJSON.children[keyIndex[0]].children[keyIndex[1]].children[i].children = [];
+                tempJSON.children[keyIndex[0]].children[keyIndex[1]].children[i].children.push({code: json.children[keyIndex[0]].children[keyIndex[1]].children[i].children[j].code});
+              }
+            } console.log(json.children[keyIndex[0]].children[keyIndex[1]].children[i].children.length == 0);
           }
           update(tempJSON);
         }
-        callback(root.children[keyIndex[0]].children[keyIndex[1]]);
+        callback(root.children[keyIndex[0]].children[keyIndex[1]]); 
       });
     }
 
@@ -171,17 +173,17 @@
       console.log(d.data.code.length);
       switch (d.data.code.length) {
         case 1:
-        prev = d;
+        prev = d.data.code;
         addThirdLevel(d, function(c) {transition(c)});
         break;
         case 3:
-        if(prev.data.code.length == 1){
+        if(prev.length == 1){
           addFourthLevel(d, function(c){transition(c)});
           transition(d);
         }else{
           transition(d);  
         }
-        prev = d;
+        prev = d.data.code;
         break;
         case 5:
         transition(d);
@@ -189,15 +191,17 @@
         if(d.data.code == "ICD-10"){
           initialSunburst();
           transition(d);
-        } else{transition(d)};
+        } else{if(d.data.code == "ch. 22"){
+          addFourthLevel(d, function(c){transition(c)});
+          prev = d.data.code;
+        }else{transition(d)};}
         break;
         case 7:
         case 8:
         case 9:
-        prev = d;
         addFourthLevel(d, function(c){transition(c)});
-        //transition(prev);
-        //default:
+        prev = d.data.code;
+        default:
         break;
       }
     }
