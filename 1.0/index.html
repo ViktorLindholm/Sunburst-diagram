@@ -142,13 +142,13 @@
             }
           }
           for(let i=0; i < json.children[keyIndex[0]].children[keyIndex[1]].children.length; i++){
-
-            for(let j = 0; j < json.children[keyIndex[0]].children[keyIndex[1]].children[i].children.length; j++){
-              if(json.children[keyIndex[0]].children[keyIndex[1]].children[i].children.length != 0){
-                tempJSON.children[keyIndex[0]].children[keyIndex[1]].children[i].children = [];
+            if(json.children[keyIndex[0]].children[keyIndex[1]].children[i].children.length != 0){
+              tempJSON.children[keyIndex[0]].children[keyIndex[1]].children[i].children = [];
+              for(let j = 0; j < json.children[keyIndex[0]].children[keyIndex[1]].children[i].children.length; j++){
                 tempJSON.children[keyIndex[0]].children[keyIndex[1]].children[i].children.push({code: json.children[keyIndex[0]].children[keyIndex[1]].children[i].children[j].code});
               }
-            } console.log(json.children[keyIndex[0]].children[keyIndex[1]].children[i].children.length == 0);
+            }
+            console.log(json.children[keyIndex[0]].children[keyIndex[1]].children[i].children.length == 0);
           }
           update(tempJSON);
         }
@@ -179,7 +179,7 @@
         case 3:
         if(prev.length == 1){
           addFourthLevel(d, function(c){transition(c)});
-          transition(d);
+          //transition(d);
         }else{
           transition(d);  
         }

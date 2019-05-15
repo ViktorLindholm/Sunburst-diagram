@@ -2,16 +2,16 @@
 <meta charset="utf-8">
 <style>
   body {
-      font-family: sans-serif;
-      font-size: 16px;
+    font-family: sans-serif;
+    font-size: 16px;
   }
   path {
     stroke: #fff;
   }
   text {
-      pointer-events: none;
-      dominant-baseline: middle;
-      text-anchor: middle;
+    pointer-events: none;
+    dominant-baseline: middle;
+    text-anchor: middle;
   }
 </style>
 <script type = "text/javacript" src="icd-10-3.json"></script>
@@ -42,16 +42,16 @@
     .attr("transform", "translate(" + width / 2 + "," + (height / 2) + ")");
     
     function labelVisible(d) {
-        return d.y1 <= 3 && d.y0 >= 1 && (d.y1 - d.y0) * (d.x1 - d.x0) > 0.03;
+      return d.y1 <= 3 && d.y0 >= 1 && (d.y1 - d.y0) * (d.x1 - d.x0) > 0.03;
     }
 
     function labelTransform(d) {
-        const xd = x(d.x0 + d.x1) / 2 * 180 / Math.PI;
+      const xd = x(d.x0 + d.x1) / 2 * 180 / Math.PI;
         //const yd = (d.y0 + d.y1) / 2 * radius;
         return `rotate(${xd - 90}) translate(${y((d.y0 + d.y1) / 2)},0) rotate(${-xd + 90})`;
-    }
+      }
 
-    const textFits = d => {
+      const textFits = d => {
         const CHAR_SPACE = 6;
 
         const deltaAngle = x(d.x1) - x(d.x0);
@@ -59,169 +59,171 @@
         const perimeter = r * deltaAngle;
 
         return d.data.code.length * CHAR_SPACE < perimeter ? 1 : 0;
-    };
+      };
 
-    initialSunburst();
+      initialSunburst();
 
-    function initialSunburst(){
-      d3.json("icd-10-3.json").then(function(json) {
-        let tempJSON = {};
-        tempJSON.code = json.code;
-        tempJSON.children = [];
-        if(tempJSON) {
-          for (let i = 0; i < json.children.length; i += 1) {
-            let t = []
-            for (let j = 0; j < json.children[i].children.length; j += 1) {
-              t.push({ code: json.children[i].children[j].code })
+      function initialSunburst(){
+        d3.json("icd-10-3.json").then(function(json) {
+          let tempJSON = {};
+          tempJSON.code = json.code;
+          tempJSON.children = [];
+          if(tempJSON) {
+            for (let i = 0; i < json.children.length; i += 1) {
+              let t = []
+              for (let j = 0; j < json.children[i].children.length; j += 1) {
+                t.push({ code: json.children[i].children[j].code })
+              }
+              tempJSON.children.push({code: json.children[i].code, children: t });
             }
-            tempJSON.children.push({code: json.children[i].code, children: t });
+            update(tempJSON);
           }
-          update(tempJSON);
-        }
-      });
-    }
+        });
+      }
 
-    function update(data) {
-      root = d3.hierarchy(data);
-      root.sum(function(d) {
-        if (typeof d.children != "undefined")
-          return 0 
-        else return 1; });
-      partition(root);
-      var newSVG = svg.selectAll("path")
-      .data(root.descendants());
-      newSVG.join(
-        enter => enter.append("g")
-        .on("click", click)
-        .on("mouseover", function(d){
-          d3.select(this).style("cursor", "pointer"); 
-        })
-        .call( function (enter) {
-          enter.append("path")
-          .style("fill", function(d) { return color((d.children ? d : d.parent).data.code)
+      function update(data) {
+        root = d3.hierarchy(data);
+        root.sum(function(d) {
+          if (typeof d.children != "undefined")
+            return 0 
+          else return 1; });
+        partition(root);
+        var newSVG = svg.selectAll("path")
+        .data(root.descendants());
+        newSVG.join(
+          enter => enter.append("g")
+          .on("click", click)
+          .on("mouseover", function(d){
+            d3.select(this).style("cursor", "pointer"); 
           })
-          .attr("d", arc);
-        })
-        )
+          .call( function (enter) {
+            enter.append("path")
+            .style("fill", function(d) { return color((d.children ? d : d.parent).data.code)
+            })
+            .attr("d", arc);
+          })
+          )
         .call( function (enter) {
           enter.append("title")
           .text(function(d) { return d.data.code;})
-                const text = enter.append('text')
-                .attr("fill-opacity", "1")
-                .attr("transform", d => labelTransform(d))
+          const text = enter.append('text')
+          .attr("fill-opacity", "1")
+          .attr("transform", d => labelTransform(d))
                 //.attr("fill-opacity", d => +textFits(d))
                 .text(d => d.data.code);
-        })
+              })
 
-    }
-
-    function findKeyIndex(key,json){
-      for(let i = 0; i < json.children.length; i++){
-        if(key.data.code == json.children[i].code){
-          return i;
-        }
-        for(let j=0; j < json.children[i].children.length; j++){
-          if(key.data.code == json.children[i].children[j].code){
-            return [i,j];
-          }
-          for(let k=0; k < json.children[i].children[j].children.length;k++){
-            if(key.data.code == json.children[i].children[j].children[k].code){
-              return [i,j,k];
-            }
-          }
-        }
       }
-      return 5;
-    }
 
-    function addThirdLevel(key, callback){
-      d3.json("icd-10-3.json").then(function(json){
-        let tempJSON = {};
-        tempJSON.code = json.code;
-        tempJSON.children = [];
-        if(tempJSON) {
-          for (let i = 0; i < json.children.length; i += 1) {
-            let t = []
-            for (let j = 0; j < json.children[i].children.length; j += 1) {
-              t.push({ code: json.children[i].children[j].code })
-            }
-            tempJSON.children.push({code: json.children[i].code, children: t });
+      function findKeyIndex(key,json){
+        for(let i = 0; i < json.children.length; i++){
+          if(key.data.code == json.children[i].code){
+            return i;
           }
-          keyIndex = findKeyIndex(key,json);
-          for(let i =0; i < json.children[keyIndex].children.length; i++){
-            tempJSON.children[keyIndex].children[i].children = [];
-            for(let j=0; j < json.children[keyIndex].children[i].children.length;j++){
-              tempJSON.children[keyIndex].children[i].children.push({code: json.children[keyIndex].children[i].children[j].code});
+          for(let j=0; j < json.children[i].children.length; j++){
+            if(key.data.code == json.children[i].children[j].code){
+              return [i,j];
+            }
+            for(let k=0; k < json.children[i].children[j].children.length;k++){
+              if(key.data.code == json.children[i].children[j].children[k].code){
+                return [i,j,k];
+              }
             }
           }
-          update(tempJSON)
         }
-        callback(root.children[keyIndex]);
-      });
-    }
+        return 5;
+      }
 
-    function addFourthLevel(key, callback){
-      d3.json("icd-10-3.json").then(function(json){
-        keyIndex = findKeyIndex(key,json);
-        let tempJSON = {};
-        tempJSON.code = json.code;
-        tempJSON.children = [];
-        if(tempJSON){
-          for (let i = 0; i < json.children.length; i += 1) {
-            let t = []
-            for (let j = 0; j < json.children[i].children.length; j += 1) {
-              t.push({ code: json.children[i].children[j].code })
+      function addThirdLevel(key, callback){
+        d3.json("icd-10-3.json").then(function(json){
+          let tempJSON = {};
+          tempJSON.code = json.code;
+          tempJSON.children = [];
+          if(tempJSON) {
+            for (let i = 0; i < json.children.length; i += 1) {
+              let t = []
+              for (let j = 0; j < json.children[i].children.length; j += 1) {
+                t.push({ code: json.children[i].children[j].code })
+              }
+              tempJSON.children.push({code: json.children[i].code, children: t });
             }
-            tempJSON.children.push({code: json.children[i].code, children: t });
+            keyIndex = findKeyIndex(key,json);
+            for(let i =0; i < json.children[keyIndex].children.length; i++){
+              tempJSON.children[keyIndex].children[i].children = [];
+              for(let j=0; j < json.children[keyIndex].children[i].children.length;j++){
+                tempJSON.children[keyIndex].children[i].children.push({code: json.children[keyIndex].children[i].children[j].code});
+              }
+            }
+            update(tempJSON)
           }
+          callback(root.children[keyIndex]);
+        });
+      }
+
+      function addFourthLevel(key, callback){
+        d3.json("icd-10-3.json").then(function(json){
           keyIndex = findKeyIndex(key,json);
-          
-          for(let i =0; i < json.children[keyIndex[0]].children.length; i++){
-            tempJSON.children[keyIndex[0]].children[i].children = [];
-            for(let j=0; j < json.children[keyIndex[0]].children[i].children.length;j++){
-              tempJSON.children[keyIndex[0]].children[i].children.push({code: json.children[keyIndex[0]].children[i].children[j].code});
+          let tempJSON = {};
+          tempJSON.code = json.code;
+          tempJSON.children = [];
+          if(tempJSON){
+            for (let i = 0; i < json.children.length; i += 1) {
+              let t = []
+              for (let j = 0; j < json.children[i].children.length; j += 1) {
+                t.push({ code: json.children[i].children[j].code })
+              }
+              tempJSON.children.push({code: json.children[i].code, children: t });
             }
-          }
-          for(let i=0; i < json.children[keyIndex[0]].children[keyIndex[1]].children.length; i++){
-            tempJSON.children[keyIndex[0]].children[keyIndex[1]].children[i].children = [];
-            for(let j = 0; j < json.children[keyIndex[0]].children[keyIndex[1]].children[i].children.length; j++){
-              tempJSON.children[keyIndex[0]].children[keyIndex[1]].children[i].children.push({code: json.children[keyIndex[0]].children[keyIndex[1]].children[i].children[j].code});
+
+            for(let i =0; i < json.children[keyIndex[0]].children.length; i++){
+              tempJSON.children[keyIndex[0]].children[i].children = [];
+              for(let j=0; j < json.children[keyIndex[0]].children[i].children.length;j++){
+                tempJSON.children[keyIndex[0]].children[i].children.push({code: json.children[keyIndex[0]].children[i].children[j].code});
+              }
             }
+            for(let i=0; i < json.children[keyIndex[0]].children[keyIndex[1]].children.length; i++){
+              if(json.children[keyIndex[0]].children[keyIndex[1]].children[i].children.length != 0){
+                tempJSON.children[keyIndex[0]].children[keyIndex[1]].children[i].children = [];
+                for(let j = 0; j < json.children[keyIndex[0]].children[keyIndex[1]].children[i].children.length; j++){
+                  tempJSON.children[keyIndex[0]].children[keyIndex[1]].children[i].children.push({code: json.children[keyIndex[0]].children[keyIndex[1]].children[i].children[j].code});
+                }
+              }
+              console.log(json.children[keyIndex[0]].children[keyIndex[1]].children[i].children.length == 0);
+            }
+            update(tempJSON);
           }
-          update(tempJSON);
-        }
-        callback(root.children[keyIndex[0]].children[keyIndex[1]]);
-      });
-    }
+          callback(root.children[keyIndex[0]].children[keyIndex[1]]); 
+        });
+      }
 
-    function transition(d){
-      svg.transition()
-      .duration(700)
-      .tween("scale", function() {
-        var xd = d3.interpolate(x.domain(), [d.x0, d.x1]),
-        yd = d3.interpolate(y.domain(), [d.y0, 1]),
-        yr = d3.interpolate(y.range(), [d.y0 ? 20 : 0, radius]);
-        return function(t) { x.domain(xd(t)); y.domain(yd(t)).range(yr(t)); };
-      })
-      .selectAll("path")
-      .attrTween("d", function(d) { return function() { return arc(d); }; });
-    }
+      function transition(d){
+        svg.transition()
+        .duration(700)
+        .tween("scale", function() {
+          var xd = d3.interpolate(x.domain(), [d.x0, d.x1]),
+          yd = d3.interpolate(y.domain(), [d.y0, 1]),
+          yr = d3.interpolate(y.range(), [d.y0 ? 20 : 0, radius]);
+          return function(t) { x.domain(xd(t)); y.domain(yd(t)).range(yr(t)); };
+        })
+        .selectAll("path")
+        .attrTween("d", function(d) { return function() { return arc(d); }; });
+      }
 
-    function click(d) {
+      function click(d) {
       console.log(d.data.code.length);
       switch (d.data.code.length) {
         case 1:
-        prev = d;
+        prev = d.data.code;
         addThirdLevel(d, function(c) {transition(c)});
         break;
         case 3:
-        if(prev.data.code.length == 1){
+        if(prev.length == 1){
           addFourthLevel(d, function(c){transition(c)});
-          transition(d);
+          //transition(d);
         }else{
           transition(d);  
         }
-        prev = d;
+        prev = d.data.code;
         break;
         case 5:
         transition(d);
@@ -229,15 +231,18 @@
         if(d.data.code == "ICD-10"){
           initialSunburst();
           transition(d);
-        } else{transition(d)};
+        } else{if(d.data.code == "ch. 22"){
+          addFourthLevel(d, function(c){transition(c)});
+          prev = d.data.code;
+        }else{transition(d)};}
         break;
         case 7:
         case 8:
         case 9:
-        prev = d;
         addFourthLevel(d, function(c){transition(c)});
+        prev = d.data.code;
         default:
         break;
       }
     }
-  </script>
+    </script>

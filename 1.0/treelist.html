@@ -26,28 +26,41 @@
     <script type="application/javascript">
         var id = 0;
         d3.json("icd-10-3.json", function (err, data) {
-            var tree = d3.layout.treelist()
-            .childIndent(10)
-            .nodeHeight(30);
-            var ul = d3.select("body").append("ul").classed("treelist", "true");
+            const dynamicChildren = data.code;
+            const isNotPresent = o => typeof o === 'undefined' || o == null;
+            const isPresent = o => !isNotPresent(o);
+            const deepCopy = o =>  JSON.parse(JSON.stringify(o));
+            const lazyLoadChildren = d => {
+               const dynamicChildren = childrenLookup[d.name]
+               if (isNotPresent(d.children) && isNotPresent(d._children) && isPresent(dynamicChildren)) {
+                d.children = deepCopy(dynamicChildren)
+            }
+        }
+        console.log(dynamicChildren);
+        var tree = d3.layout.treelist()
+        .childIndent(10)
+        .nodeHeight(30);
+        var ul = d3.select("body").append("ul").classed("treelist", "true");
 
-            function render(data, parent) {
-                var nodes = tree.nodes(data),
-                duration = 250;
-                function toggleChildren(d) {
-                    if (d.children) {
-                        d._children = d.children;
-                        d.children = null;
-                    } else if (d._children) {
-                        d.children = d._children;
-                        d._children = null;
-                    }
+        function render(data, parent) {
+            var nodes = tree.nodes(data),
+            duration = 250;
+
+            /*
+            function toggleChildren(d) {
+                if (d.children) {
+                    d._children = d.children;
+                    d.children = null;
+                } else if (d._children) {
+                    d.children = d._children;
+                    d._children = null;
                 }
+            }*/
 
-                var nodeEls = ul.selectAll("li.node").data(nodes, function (d) {
-                    d.id = d.id || ++id;
-                    return d.id;
-                });
+            var nodeEls = ul.selectAll("li.node").data(nodes, function (d) {
+                d.id = d.id || ++id;
+                return d.id;
+            });
                     //entered nodes
                     var entered = nodeEls.enter().append("li").classed("node", true)
                     .style("top", parent.y +"px")
