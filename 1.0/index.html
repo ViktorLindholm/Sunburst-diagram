@@ -31,7 +31,7 @@
     .attr("height", height)
     .append("g")
     .attr("transform", "translate(" + width / 2 + "," + (height / 2) + ")");
-
+    
     initialSunburst();
 
     function initialSunburst(){
@@ -73,6 +73,11 @@
           )
         )
       .attr("d", arc);
+      newSVG.selectAll("code")
+      .data(data)
+      .enter().append("text")
+      
+
     }
 
     function findKeyIndex(key,json){
