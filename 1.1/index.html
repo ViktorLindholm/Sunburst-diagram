@@ -53,7 +53,7 @@
         .innerRadius(d => Math.max(0, y(d.y0)))
         .outerRadius(d => Math.max(0, y(d.y1)));
 
-        const middleArcLine = d => {
+        let middleArcLine = d => {
             const halfPi = Math.PI/2;
             const angles = [x(d.x0) - halfPi, x(d.x1) - halfPi];
             const r = Math.max(0, (y(d.y0) + y(d.y1)) / 2);
@@ -67,7 +67,7 @@
             return path.toString();
         };
 
-        const textFits = d => {
+        let textFits = d => {
             const CHAR_SPACE = 6;
 
             const deltaAngle = x(d.x1) - x(d.x0);
@@ -77,7 +77,7 @@
             return d.data.code.length * CHAR_SPACE < perimeter;
         };
 
-        const svg = d3.select('body').append('svg')
+        var svg = d3.select('body').append('svg')
         .style('width', '100vw')
         .style('height', '100vh')
         .attr('viewBox', `${-width / 2} ${-height / 2} ${width} ${height}`);
@@ -103,25 +103,54 @@
   });
       }
 
-
+      function update(data) {
+      root = d3.hierarchy(data);
+      root.sum(function(d) {
+        if (typeof d.children != "undefined")
+          return 0 
+        else return 1; });
+      partition(root);
+      var newSVG = svg.selectAll("path")
+      .data(root.descendants());
+      newSVG.join(
+        enter => enter.append("path")
+        .style("fill", function(d) { return color((d.children ? d : d.parent).data.code); })
+        .on("click", focusOn)
+        .on("mouseover", function(d){
+          d3.select(this).style("cursor", "pointer"); 
+        })
+        .call( enter => enter.append("title")
+          .text(function(d) { return d.data.code;})
+          )
+        )
+      .attr("d", arc);
+      newSVG.selectAll("code")
+      .data(data)
+      .enter().append("text")
+    }
+/*
       function update(tempJSON){
+        //console.log(d3.event);
           root = d3.hierarchy(tempJSON);
           root.sum(function(d) {
             if (typeof d.children != "undefined")
               return 0 
           else return 1; });
-
-          const slice = svg.selectAll('g.slice')
+          partition(root);
+          var slice = svg.selectAll('g.slice')
           .data(partition(root).descendants());
           //const slice = svg.selectAll("path")
           //.data(root.descendants());
 
-          //slice.exit().remove();
 
-          const newSlice = slice.enter()
+          slice.exit().remove();
+
+          let newSlice = slice.enter()
+          //var newSlice = svg.selectAll('g.slice')
+          .data(partition(root).descendants())
           .append('g').attr('class', 'slice')
           .on('click', d => {
-            d3.event.stopPropagation();
+            //d3.event.stopPropagation();
             focusOn(d);
         });
 
@@ -156,7 +185,7 @@
           .attr('xlink:href', (_, i) => `#hiddenArc${i}` )
           .attr("transform", d => labelTransform(d))
           .text(d => d.data.code);
-      }
+      }*/
 
       function labelTransform(d) {
           const xd = x(d.x0 + d.x1) / 2 * 180 / Math.PI;
@@ -189,30 +218,32 @@ function addThirdLevel(key, callback){
         tempJSON.code = json.code;
         tempJSON.children = [];
         if(tempJSON) {
-          for (let i = 0; i < json.children.length; i += 1) {
-            let t = []
-            for (let j = 0; j < json.children[i].children.length; j += 1) {
-              t.push({ code: json.children[i].children[j].code })
+            for (let i = 0; i < json.children.length; i += 1) {
+                let t = []
+                for (let j = 0; j < json.children[i].children.length; j += 1) {
+                  t.push({ code: json.children[i].children[j].code })
+              }
+              tempJSON.children.push({code: json.children[i].code, children: t });
           }
-          tempJSON.children.push({code: json.children[i].code, children: t });
-      }
-      keyIndex = findKeyIndex(key,json);
-      for(let i =0; i < json.children[keyIndex].children.length; i++){
-        tempJSON.children[keyIndex].children[i].children = [];
-        for(let j=0; j < json.children[keyIndex].children[i].children.length;j++){
-          tempJSON.children[keyIndex].children[i].children.push({code: json.children[keyIndex].children[i].children[j].code});
-      }
-  }
-  update(tempJSON)
-}
-callback(root.children[keyIndex]);
+          keyIndex = findKeyIndex(key,json);
+          for(let i =0; i < json.children[keyIndex].children.length; i++){
+            tempJSON.children[keyIndex].children[i].children = [];
+            for(let j=0; j < json.children[keyIndex].children[i].children.length;j++){
+                tempJSON.children[keyIndex].children[i].children.push({code: json.children[keyIndex].children[i].children[j].code});
+            }
+        }
+        rootcopy = root.children[keyIndex[0]];
+        update(tempJSON);
+        //callback(root.children[keyIndex[0]]);
+        callback(rootcopy);
+    }
 });
 }
 
 function transition(d){
-    console.log(d.data.code);
-    const transition = svg.transition()
-    .duration(7500)
+    //console.log(d.data.code);
+    let transition = svg.transition()
+    .duration(750)
     .tween('scale', () => {
         const xd = d3.interpolate(x.domain(), [d.x0, d.x1]),
         yd = d3.interpolate(y.domain(), [d.y0, 1]);
@@ -220,6 +251,7 @@ function transition(d){
     });
 
     transition.selectAll('path.main-arc')
+    //transition.selectAll("hej")
     .attrTween('d', d => () => arc(d));
 
     transition.selectAll('path.hidden-arc')
@@ -228,11 +260,11 @@ function transition(d){
     transition.selectAll('text')
     .attrTween('display', d => () => textFits(d) ? null : 'none');
 
-    moveStackToFront(d);
+    //moveStackToFront(d);
 }
 
 function focusOn(d) {
-    console.log(d.data.code.length);
+    //console.log(d.data.code.length);
     switch (d.data.code.length) {
         case 1:
         prev = d.data.code;

@@ -72,18 +72,17 @@
           .text(function(d) { return d.data.code;})
           )
         )
+      //.transition().duration(700)
       .attr("d", arc);
       newSVG.selectAll("code")
       .data(data)
       .enter().append("text")
-      
-
     }
 
     function findKeyIndex(key,json){
       for(let i = 0; i < json.children.length; i++){
         if(key.data.code == json.children[i].code){
-          return i;
+          return [i];
         }
         for(let j=0; j < json.children[i].children.length; j++){
           if(key.data.code == json.children[i].children[j].code){
@@ -96,6 +95,7 @@
           }
         }
       }
+      console.log("failed to find");
       return 5;
     }
 
@@ -121,7 +121,7 @@
           }
           update(tempJSON)
         }
-        callback(root.children[keyIndex]);
+        callback(root.children[keyIndex[0]]);
       });
     }
 
