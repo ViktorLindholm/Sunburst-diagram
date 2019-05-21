@@ -18,14 +18,19 @@
                 font-size: 10px;
             }
         </style>
-        
+        <header>
+
+        </header>
         <meta name="description" content="">
         <meta name="viewport" content="width=device-width">
         <script src="http://d3js.org/d3.v3.min.js"></script>
         <script type="text/javascript" src="treelist.js"></script>
         <script type="application/javascript">
             var id = 0;
-            d3.json("icd-10-3.json", function (error, data) {
+            var json;
+            d3.json("icd-10-3.json", function (err, data) {
+                json = data;
+                var root;
                 var tree = d3.layout.treelist()
                     .childIndent(10)
                     .nodeHeight(30);
@@ -34,6 +39,7 @@
                 function render(data, parent) {
                     var nodes = tree.nodes(data),
                         duration = 250;
+
                     function toggleChildren(d) {
                         if (d.children) {
                             d._children = d.children;
@@ -57,6 +63,7 @@
                             toggleChildren(d);
                             render(data, d);
                         })
+                        .on("dblclick",function(d){ alert("node was double clicked"); })
                         .on("mouseover", function (d) {
                             d3.select(this).classed("selected", true);
                         })
@@ -90,12 +97,26 @@
                         .style("left", function (d) { return d.x + "px"; })
                         .style("opacity", 1);
                     nodeEls.exit().remove();
+
                 }
-
                 render(data, data);
-
+                collapseAll(render);
             });
+
+            function collapseAll(render){
+                json.children.forEach(collapse);
+                collapse(json);
+                render(json,json);
+            }
+
+            function collapse(d){
+                if(d.children){
+                    d._children = d.children;
+                    d._children.forEach(collapse);
+                    d.children = null;
+                }
+            }
+
         </script>
     <body>
-
     </body>
