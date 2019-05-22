@@ -2,7 +2,7 @@
     'use strict';
 
     const format = d3.format(",d");
-    const width = 2000;
+    const width = window.innerHeight-20;
     const radius = width / 6;
 
     const arc = d3.arc()
@@ -15,7 +15,7 @@
 
     const partition = data => {
         const root = d3.hierarchy(data)
-                .sum(d => typeof d.children == "undefined" ? 1 : 0)
+                .sum(d => typeof d.size != "undefined"? d.size : typeof d.children == "undefined" || d.children.length == 0 ? 1 : 0)
                 .sort((a, b) => b.code - a.code);
         return d3.partition()
                 .size([2 * Math.PI, root.height + 1])
@@ -23,11 +23,20 @@
     };
 
     d3.json('icd-10-3.json').then(data => {
-        console.log(data);
+
+        for (let i = 0; i < data.children.length; i += 1) {
+            for (let j = 0; j < data.children[i].children.length; j += 1) {
+                if (data.children[i].children[j].children.length < 3){
+                    data.children[i].children[j].children.map( d => d.size = 30);
+                }
+            }
+        }
         const root = partition(data);
         const color = d3.scaleOrdinal().range(d3.quantize(d3.interpolateRainbow, data.children.length + 1));
 
-        root.each(d => d.current = d);
+        root.each(d => {d.current = d
+                        d.data.nameShort = typeof d.data.name != "undefined" ? d.data.name.substring(0, 20) : ""
+                    });
 
         const svg = d3.select('#partitionSVG')
                 .attr("cx", 200)
@@ -50,16 +59,17 @@
                     return color(d.data.code);
                 })
                 .attr("fill-opacity", d => arcVisible(d.current) ? (d.children ? 0.6 : 0.4) : 0)
-                .attr("d", d => arc(d.current));
+                .attr("d", d => arc(d.current))
 
-        path.filter(d => d.children)
+         path.filter(d => d.children)
                 .style("cursor", "pointer")
                 .on("click", clicked);
 
         path.append("title")
-                .text(d => `${d.ancestors().map(d => d.data.code).reverse().join("/")}\n${d.data.name}`);
+                .text(d => `${d.ancestors().map(d => d.data.code).reverse().join("/")}\n${typeof d.data.name != "undefined" ? d.data.name : ""}`);
 
         const label = g.append("g")
+                .attr("class", "label")
                 .attr("pointer-events", "none")
                 .attr("text-anchor", "middle")
                 .style("user-select", "none")
@@ -69,7 +79,7 @@
                 .attr("dy", "0.35em")
                 .attr("fill-opacity", d => +labelVisible(d.current))
                 .attr("transform", d => labelTransform(d.current))
-                .text(d => [d.data.code, d.data.name]);
+                .text(d => d.data.code + (d.data.nameShort.length > 0 ? ", " + d.data.nameShort: ""));
 
         const parent = g.append("circle")
                 .datum(root)

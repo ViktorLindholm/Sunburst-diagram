@@ -73,6 +73,16 @@ function collapse(d) {
   }
 }
 
+function getBB(selection) {
+    selection.each(function(d){d.bbox = {};
+      const padding = 2;
+      d.bbox.x = this.getBBox().x - padding;
+      d.bbox.y = this.getBBox().y - padding;
+      d.bbox.width = this.getBBox().width + 2 * padding;
+      d.bbox.height = this.getBBox().height + 2 * padding;
+    })
+}
+
 function update(source) {
 
   // Assigns the x and y position for the nodes
@@ -119,8 +129,20 @@ function update(source) {
       .style("fill", function(d) {
           return d._children ? "red" : "green";
       })
-      .text(function(d) { return [d.data.code , d.data.name]; });
+      .text(function(d) { return [d.data.code , d.data.name]; })
+      .call(getBB);
 
+  nodeEnter.insert("rect", "text")
+            // .selectAll("rect")
+            // .data(root.descendants().slice(1))
+            // .join("rect")    
+            .attr("x", d => d.bbox.x)
+            .attr("y", d => d.bbox.y)
+            .attr("width", function(d){return d.bbox.width})
+            .attr("height", function(d){return d.bbox.height})
+            .attr("fill", "white")
+            // .attr("fill-opacity", d => +labelVisible(d.current))
+            // .attr("transform", d => labelTransform(d.current));
   // UPDATE
   var nodeUpdate = nodeEnter.merge(node);
 
