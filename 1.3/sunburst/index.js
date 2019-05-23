@@ -2,7 +2,7 @@
     'use strict';
 
     const format = d3.format(",d");
-    const width = window.innerHeight-20;
+    const width = window.innerHeight;
     const radius = width / 6;
 
     const arc = d3.arc()
@@ -23,7 +23,6 @@
     };
 
     d3.json('icd-10-3.json').then(data => {
-
         for (let i = 0; i < data.children.length; i += 1) {
             for (let j = 0; j < data.children[i].children.length; j += 1) {
                 if (data.children[i].children[j].children.length < 3){
@@ -34,8 +33,20 @@
         const root = partition(data);
         const color = d3.scaleOrdinal().range(d3.quantize(d3.interpolateRainbow, data.children.length + 1));
 
-        root.each(d => {d.current = d
-                        d.data.nameShort = typeof d.data.name != "undefined" ? d.data.name.substring(0, 20) : ""
+        function getFullWordsSubString(d){
+        	var n = d.data.name.split(" ");
+        	var fullReturnValue = n[0] + " " + n[1]
+        	if(fullReturnValue.length < 25){
+        		return n[0] + " " + n[1]
+        	}else{
+        		return n[0]
+        	}
+        	
+        }
+
+        root.each(d => {
+        	d.current = d
+            d.data.nameShort = typeof d.data.name != "undefined" ?  getFullWordsSubString(d) + "...": ""//d.data.name.substr(d.data.name.length - 20) : ""
                     });
 
         const svg = d3.select('#partitionSVG')
@@ -98,7 +109,7 @@
                     y1: Math.max(0, d.y1 - p.depth)
                 });
 
-            const t = g.transition().duration(750);
+            const t = g.transition().duration(1000);
 
             // Transition the data on all arcs, even the ones that aren’t visible,
             // so that if this transition is interrupted, entering arcs will start
