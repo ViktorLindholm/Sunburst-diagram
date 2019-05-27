@@ -1,6 +1,6 @@
 (function () {
     'use strict';
-
+    let counter =0;
     const format = d3.format(",d");
     const width = window.innerHeight;
     const radius = width / 6;
@@ -100,6 +100,8 @@
                 .on("click", clicked);
 
         function clicked(p) {
+            counter++;
+            console.log(counter, p.data.code, Date.now());
             parent.datum(p.parent || root);
 
             root.each(d => d.target = {

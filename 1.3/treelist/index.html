@@ -26,6 +26,7 @@
         <script src="http://d3js.org/d3.v3.min.js"></script>
         <script type="text/javascript" src="treelist.js"></script>
         <script type="application/javascript">
+            let counter = 0;
             var id = 0;
             var json;
             d3.json("icd-10-3.json", function (err, data) {
@@ -60,6 +61,8 @@
                         .style("opacity", 0)
                         .style("height", tree.nodeHeight() + "px")
                         .on("click", function (d) {
+                            counter++;
+                            console.log(counter, d.code);
                             toggleChildren(d);
                             render(data, d);
                         })
