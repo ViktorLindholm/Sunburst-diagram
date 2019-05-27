@@ -36,7 +36,7 @@
         function getFullWordsSubString(d){
         	var n = d.data.name.split(" ");
         	var fullReturnValue = n[0] + " " + n[1]
-        	if(fullReturnValue.length < 25){
+        	if(fullReturnValue.length < 25 && (typeof n[1] != "undefined")){
         		return n[0] + " " + n[1]
         	}else{
         		return n[0]
