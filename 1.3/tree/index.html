@@ -27,6 +27,8 @@
 <script>
 
 let counter=0;
+let timer = Date.now();
+let totalTime = 0;
 // Set the dimensions and margins of the diagram
 var margin = {top: 20, right: 90, bottom: 30, left: 90},
     width = 9600 - margin.left - margin.right,
@@ -230,7 +232,10 @@ function update(source) {
   // Toggle children on click.
   function click(d) {
     counter++;
-    console.log(counter, d.data.code);
+    let newTimer = Date.now() - timer;
+    timer = Date.now();
+    totalTime += newTimer;
+    console.log(counter, d.data.code, newTimer/1000, totalTime/1000, totalTime/(1000*counter));
     if (d.children) {
         d._children = d.children;
         d.children = null;

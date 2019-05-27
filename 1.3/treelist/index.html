@@ -27,6 +27,8 @@
         <script type="text/javascript" src="treelist.js"></script>
         <script type="application/javascript">
             let counter = 0;
+            let timer = Date.now();
+            let totalTime = 0;
             var id = 0;
             var json;
             d3.json("icd-10-3.json", function (err, data) {
@@ -62,11 +64,13 @@
                         .style("height", tree.nodeHeight() + "px")
                         .on("click", function (d) {
                             counter++;
-                            console.log(counter, d.code);
+                            let newTimer = Date.now() - timer;
+                            timer = Date.now();
+                            totalTime += newTimer;
+                            console.log(counter, d.code, newTimer/1000, totalTime/1000, totalTime/(1000*counter));
                             toggleChildren(d);
                             render(data, d);
                         })
-                        .on("dblclick",function(d){ alert("node was double clicked"); })
                         .on("mouseover", function (d) {
                             d3.select(this).classed("selected", true);
                         })
