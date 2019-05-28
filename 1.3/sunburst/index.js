@@ -97,9 +97,22 @@
         const parent = g.append("circle")
                 .datum(root)
                 .attr("r", radius)
-                .attr("fill", "none")
+                .attr("fill", "blue")
+                .attr("fill-opacity", 0.3)
+                .style("cursor", "pointer")
                 .attr("pointer-events", "all")
-                .on("click", clicked);
+                .on("click", clicked)
+        
+        g.append("circle")
+                .datum(root)
+                .attr("r", radius/3)
+                .attr("fill", "blue")
+                .attr("fill-opacity", 0.3)
+                .style("cursor", "pointer")
+                .attr("pointer-events", "all")
+                .on("click", clicked)
+                .append("text")
+                .text("ICD-10")
 
         function clicked(p) {
             counter++;
