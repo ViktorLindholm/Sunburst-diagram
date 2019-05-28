@@ -132,7 +132,8 @@ function update(source) {
       .style("fill", function(d) {
           return d._children ? "red" : "green";
       })
-      .text(function(d) { return [d.data.code , d.data.name]; })
+      .text( d => d.data.code + (typeof d.data.name != "undefined" ? ", " + d.data.name : "")) 
+      //.text(function(d) { return [d.data.code , d.data.name]; })
       .call(getBB);
 
   nodeEnter.insert("rect", "text")
