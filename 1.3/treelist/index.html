@@ -62,7 +62,7 @@
                     var entered = nodeEls.enter().append("li").classed("node", true)
                         .style("top", parent.y +"px")
                         .style("opacity", 0)
-                        .style("color", d => (typeof d.parent != "undefined" && (typeof d._children == "undefined" || d._children.length == 0)) ? color(d.parent.code) : "black")
+                        .style("color", d => (typeof d.parent != "undefined" && (typeof d._children == "undefined")) ? color(d.parent.code) : "black")
                         .style("height", tree.nodeHeight() + "px")
                         .on("click", function (d) {
                             counter++;
